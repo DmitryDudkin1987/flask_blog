@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Редактирование записи</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 20px;
+            background: white;
+            font-family: Arial;
+        }
+        .header {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .logout {
+            background: #d00;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .back-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .dialog {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .dialog input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .dialog button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .dialog button:hover {
+            opacity: 0.9;
+        }
+        .update-btn {
+            background: #28a745;
+            color: white;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .time-fields {
+            display: flex;
+            gap: 10px;
+        }
+        .time-fields input {
+            flex: 1;
+        }
+        .record-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        .confirmation-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .confirmation-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        .confirmation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .confirmation-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .confirm-delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .cancel-delete-btn {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{{ url_for('home') }}" class="back-btn">Назад</a>
+        <span>Пользователь: <strong>{{ username }}</strong></span>
+        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
+    </div>
+
+    <div class="dialog">
+        <div class="record-info">
+            Редактирование записи ID: <strong>{{ data.id }}</strong>
+        </div>
+        
+        <input type="text" id="partName" placeholder="part_name" value="{{ data.part_name }}">
+        <input type="number" id="plannedQuantity" placeholder="planned_quantity" min="1" value="{{ data.planned_quantity }}">
+        <input type="number" id="machineNumber" placeholder="machine_number" min="1" value="{{ data.machine_number }}">
+        
+        <div class="time-fields">
+            <input type="datetime-local" id="startTime" value="{{ data.start_time }}">
+            <input type="datetime-local" id="endTime" value="{{ data.end_time }}">
+        </div>
+        
+        <button class="update-btn" onclick="updateData()">Обновить запись</button>
+        <button class="delete-btn" onclick="showDeleteConfirmation()">Удалить запись</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirmationDialog" class="confirmation-dialog">
+        <div class="confirmation-content">
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены, что хотите удалить запись с ID: <strong>{{ data.id }}</strong>?</p>
+            <p><strong>Детали записи:</strong></p>
+            <ul>
+                <li>Название детали: {{ data.part_name }}</li>
+                <li>Количество: {{ data.planned_quantity }}</li>
+                <li>Номер станка: {{ data.machine_number }}</li>
+            </ul>
+            <p style="color: #dc3545; font-weight: bold;">Это действие нельзя отменить!</p>
+            <div class="confirmation-buttons">
+                <button class="confirm-delete-btn" onclick="deleteRecord()">Да, удалить</button>
+                <button class="cancel-delete-btn" onclick="hideDeleteConfirmation()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функция обновления данных
+        function updateData() {
+            const partNameInput = document.getElementById('partName');
+            const quantityInput = document.getElementById('plannedQuantity');
+            const machineInput = document.getElementById('machineNumber');
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            const partName = partNameInput.value.trim();
+            const plannedQuantity = quantityInput.value.trim();
+            const machineNumber = machineInput.value.trim();
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+            const messageDiv = document.getElementById('message');
+            
+            // Валидация
+            if (!partName) {
+                showMessage('Введите part_name', 'error');
+                partNameInput.focus();
+                return;
+            }
+            
+            if (!plannedQuantity) {
+                showMessage('Введите planned_quantity', 'error');
+                quantityInput.focus();
+                return;
+            }
+            
+            if (!machineNumber) {
+                showMessage('Введите machine_number', 'error');
+                machineInput.focus();
+                return;
+            }
+            
+            if (!startTime) {
+                showMessage('Введите start_time', 'error');
+                startTimeInput.focus();
+                return;
+            }
+            
+            if (!endTime) {
+                showMessage('Введите end_time', 'error');
+                endTimeInput.focus();
+                return;
+            }
+            
+            if (parseInt(plannedQuantity) <= 0) {
+                showMessage('Planned quantity должен быть положительным числом', 'error');
+                quantityInput.focus();
+                return;
+            }
+            
+            if (parseInt(machineNumber) <= 0) {
+                showMessage('Machine number должен быть положительным числом', 'error');
+                machineInput.focus();
+                return;
+            }
+            
+            if (new Date(endTime) <= new Date(startTime)) {
+                showMessage('End time должен быть позже start time', 'error');
+                endTimeInput.focus();
+                return;
+            }
+            
+            // Отправляем данные на сервер для обновления
+            fetch('/update_data/{{ data.id }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    part_name: partName,
+                    planned_quantity: plannedQuantity,
+                    machine_number: machineNumber,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Через 2 секунды возвращаемся на главную страницу
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('home') }}";
+                    }, 2000);
+                } else {
+                    showMessage('Ошибка: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Функция удаления записи
+        function deleteRecord() {
+            fetch('/delete_data/{{ data.id }}', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Скрываем диалог подтверждения
+                    hideDeleteConfirmation();
+                    // Через 2 секунды возвращаемся на главную страницу
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('home') }}";
+                    }, 2000);
+                } else {
+                    showMessage('Ошибка: ' + data.error, 'error');
+                    hideDeleteConfirmation();
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+                console.error('Error:', error);
+                hideDeleteConfirmation();
+            });
+        }
+        
+        // Функции для работы с модальным окном
+        function showDeleteConfirmation() {
+            document.getElementById('confirmationDialog').style.display = 'block';
+        }
+        
+        function hideDeleteConfirmation() {
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+        
+        // Функция отображения сообщений
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Автоматическое скрытие сообщения через 5 секунд (только для успешных)
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Сохранение по нажатию Enter
+        const inputs = document.querySelectorAll('.dialog input');
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    updateData();
+                }
+            });
+        });
+        
+        // Закрытие модального окна при клике вне его
+        document.getElementById('confirmationDialog').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideDeleteConfirmation();
+            }
+        });
+        
+        // Устанавливаем фокус на первое поле при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('partName').focus();
+        });
+    </script>
+</body>
+</html>

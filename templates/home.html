@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Главная</title>
+    <meta charset="utf-8">
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        body {
+            margin: 20px;
+            background: white;
+            font-family: Arial;
+        }
+        .header {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .logout {
+            background: #d00;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .dialog {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .dialog input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .records-table {
+            max-width: 1000px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .records-table th,
+        .records-table td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: left;
+            cursor: pointer;
+        }
+        .records-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            cursor: default;
+        }
+        .records-table tr:hover {
+            background: #f9f9f9;
+        }
+        .records-table tr.selected {
+            background: #e3f2fd;
+        }
+        .time-fields {
+            display: flex;
+            gap: 10px;
+        }
+        .time-fields input {
+            flex: 1;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        .table-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        .table-btn:hover {
+            background: #f5f5f5;
+        }
+        .report-btn {
+            border-color: #007bff;
+            color: #007bff;
+        }
+        .event-btn {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        .action-cell {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>Пользователь: <strong>{{ username }}</strong></span>
+        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
+    </div>
+
+    <div class="dialog">
+        <input type="hidden" id="recordId">
+        <input type="text" id="partName" placeholder="part_name">
+        <input type="number" id="plannedQuantity" placeholder="planned_quantity" min="1">
+        <input type="number" id="machineNumber" placeholder="machine_number" min="1">
+        
+        <div class="time-fields">
+            <input type="datetime-local" id="startTime" placeholder="start_time">
+            <input type="datetime-local" id="endTime" placeholder="end_time">
+        </div>
+        
+        <div class="button-group">
+            <!-- Primary action button -->
+            <button onclick="saveData()" class="btn btn-primary">Создать батч</button>
+            <!-- Secondary action button -->
+            <button onclick="newRecord()" class="btn btn-secondary">Новая запись</button>
+        </div>
+        <button onclick="deleteRecord()" class="btn btn-danger hidden" id="deleteBtn">Удалить</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <div id="recordsContainer" style="max-width: 1000px; margin: 0 auto;">
+        <h3>Производственные батчи:</h3>
+        <table class="records-table" id="recordsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Part Name</th>
+                    <th>Planned Qty</th>
+                    <th>Machine</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="recordsBody">
+                <!-- Данные будут загружены через JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let selectedRow = null;
+        let currentRecordId = null;
+        
+        function setDefaultTimes() {
+            const now = new Date();
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            const formatDateTime = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+            
+            if (!startTimeInput.value) {
+                startTimeInput.value = formatDateTime(now);
+            }
+            
+            if (!endTimeInput.value) {
+                const endTime = new Date(now);
+                endTime.setHours(endTime.getHours() + 1);
+                endTimeInput.value = formatDateTime(endTime);
+            }
+        }
+        
+        function loadRecordIntoForm(record) {
+            document.getElementById('recordId').value = record.id;
+            document.getElementById('partName').value = record.part_name;
+            document.getElementById('plannedQuantity').value = record.planned_quantity;
+            document.getElementById('machineNumber').value = record.machine_number;
+            
+            document.getElementById('startTime').value = record.start_time.replace(' ', 'T');
+            document.getElementById('endTime').value = record.end_time.replace(' ', 'T');
+            
+            document.getElementById('deleteBtn').classList.remove('hidden');
+            
+            currentRecordId = record.id;
+        }
+        
+        function clearFormForNewRecord() {
+            document.getElementById('recordId').value = '';
+            document.getElementById('partName').value = '';
+            document.getElementById('plannedQuantity').value = '';
+            document.getElementById('machineNumber').value = '';
+            setDefaultTimes();
+            
+            document.getElementById('deleteBtn').classList.add('hidden');
+            
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+                selectedRow = null;
+            }
+            
+            currentRecordId = null;
+            
+            document.getElementById('partName').focus();
+        }
+        
+        function saveData() {
+            const recordId = document.getElementById('recordId').value;
+            const partNameInput = document.getElementById('partName');
+            const quantityInput = document.getElementById('plannedQuantity');
+            const machineInput = document.getElementById('machineNumber');
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            const partName = partNameInput.value.trim();
+            const plannedQuantity = quantityInput.value.trim();
+            const machineNumber = machineInput.value.trim();
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+            const messageDiv = document.getElementById('message');
+            
+            if (!partName) {
+                showMessage('Введите part_name', 'error');
+                partNameInput.focus();
+                return;
+            }
+            
+            if (!plannedQuantity) {
+                showMessage('Введите planned_quantity', 'error');
+                quantityInput.focus();
+                return;
+            }
+            
+            if (!machineNumber) {
+                showMessage('Введите machine_number', 'error');
+                machineInput.focus();
+                return;
+            }
+            
+            if (!startTime) {
+                showMessage('Введите start_time', 'error');
+                startTimeInput.focus();
+                return;
+            }
+            
+            if (!endTime) {
+                showMessage('Введите end_time', 'error');
+                endTimeInput.focus();
+                return;
+            }
+            
+            if (parseInt(plannedQuantity) <= 0) {
+                showMessage('Planned quantity должен быть положительным числом', 'error');
+                quantityInput.focus();
+                return;
+            }
+            
+            if (parseInt(machineNumber) <= 0) {
+                showMessage('Machine number должен быть положительным числом', 'error');
+                machineInput.focus();
+                return;
+            }
+            
+            if (new Date(endTime) <= new Date(startTime)) {
+                showMessage('End time должен быть позже start time', 'error');
+                endTimeInput.focus();
+                return;
+            }
+            
+            const data = { 
+                part_name: partName,
+                planned_quantity: plannedQuantity,
+                machine_number: machineNumber,
+                start_time: startTime,
+                end_time: endTime
+            };
+            
+            let url = '/save_data';
+            if (recordId) {
+                url = `/update_data/${recordId}`;
+            }
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    if (!recordId) {
+                        clearFormForNewRecord();
+                    }
+                    loadData();
+                } else {
+                    showMessage('Ошибка: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        function newRecord() {
+            clearFormForNewRecord();
+            showMessage('Готово к созданию новой записи', 'success');
+        }
+        
+        function deleteRecord() {
+            const recordId = document.getElementById('recordId').value;
+            
+            if (!recordId) {
+                showMessage('Нет записи для удаления', 'error');
+                return;
+            }
+            
+            if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+                return;
+            }
+            
+            fetch(`/delete_data/${recordId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    clearFormForNewRecord();
+                    loadData();
+                } else {
+                    showMessage('Ошибка: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function loadData() {
+            fetch('/get_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateRecordsTable(data.data);
+                    } else {
+                        console.error('Error loading data:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function updateRecordsTable(records) {
+            const tbody = document.getElementById('recordsBody');
+            tbody.innerHTML = '';
+            
+            if (records.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 7;
+                cell.textContent = 'Нет записей';
+                cell.style.textAlign = 'center';
+                cell.style.color = '#999';
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                return;
+            }
+            
+            records.forEach(record => {
+                const row = document.createElement('tr');
+                
+                row.style.cursor = 'pointer';
+                row.title = 'Нажмите для редактирования';
+                row.addEventListener('click', function() {
+                    window.open('/edit/' + record.id, '_blank');
+                });
+                
+                const idCell = document.createElement('td');
+                idCell.textContent = record.id;
+                row.appendChild(idCell);
+                
+                const nameCell = document.createElement('td');
+                nameCell.textContent = record.part_name;
+                row.appendChild(nameCell);
+                
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = record.planned_quantity;
+                row.appendChild(quantityCell);
+                
+                const machineCell = document.createElement('td');
+                machineCell.textContent = record.machine_number;
+                row.appendChild(machineCell);
+                
+                const startCell = document.createElement('td');
+                startCell.textContent = record.start_time;
+                row.appendChild(startCell);
+                
+                const endCell = document.createElement('td');
+                endCell.textContent = record.end_time;
+                row.appendChild(endCell);
+                
+                const actionCell = document.createElement('td');
+                actionCell.className = 'action-cell';
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'action-buttons';
+                
+                const reportButton = document.createElement('button');
+                reportButton.className = 'table-btn report-btn';
+                reportButton.textContent = 'Отчет по производству';
+                reportButton.onclick = function(e) {
+                    e.stopPropagation();
+                    window.open('/production_report/' + record.id, '_blank');
+                };
+                
+                const eventButton = document.createElement('button');
+                eventButton.className = 'table-btn event-btn';
+                eventButton.textContent = 'Внести событие';
+                eventButton.onclick = function(e) {
+                    e.stopPropagation();
+                    window.open('/events/' + record.id, '_blank');
+                };
+                
+                buttonContainer.appendChild(reportButton);
+                buttonContainer.appendChild(eventButton);
+                
+                actionCell.appendChild(buttonContainer);
+                row.appendChild(actionCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        const inputs = document.querySelectorAll('.dialog input');
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveData();
+                }
+            });
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            clearFormForNewRecord();
+            loadData();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Отчет по производству - Заказ #{{ order.id }}</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 20px;
+            background: white;
+            font-family: Arial;
+        }
+        .header {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .logout {
+            background: #d00;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .dialog {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .dialog h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .dialog h3 {
+            color: #666;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .dialog input[type="text"],
+        .dialog input[type="number"],
+        .dialog input[type="datetime-local"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .dialog input[type="text"]:focus,
+        .dialog input[type="number"]:focus,
+        .dialog input[type="datetime-local"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .button-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .order-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            border-left: 4px solid #007bff;
+        }
+        .order-info h4 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .order-info p {
+            margin: 5px 0;
+        }
+        .defects-section {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .defects-section h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .total-defects {
+            background: #d1ecf1;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .total-defects strong {
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>Пользователь: <strong>{{ username }}</strong></span>
+        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
+    </div>
+
+    <div class="dialog">
+        <h2>Отчет по производству</h2>
+        
+        <div class="order-info">
+            <h4>Информация о заказе:</h4>
+            <p><strong>ID заказа:</strong> {{ order.id }}</p>
+            <p><strong>Планируемое количество:</strong> {{ order.planned_quantity }}</p>
+            <p><strong>Станок №:</strong> {{ order.machine_number }}</p>
+            <p><strong>Плановое время начала:</strong> {{ order.start_time }}</p>
+            <p><strong>Плановое время окончания:</strong> {{ order.end_time }}</p>
+        </div>
+
+        <h3>Фактические данные производства</h3>
+        
+        <input type="hidden" id="orderId" value="{{ order.id }}">
+        
+        <div class="form-group">
+            <label for="partNumber">Наименование детали (part_number):</label>
+            <input type="text" id="partNumber" placeholder="Введите наименование детали" 
+                   value="{{ report.part_number if report else '' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="actualQuantity">Фактическое количество:</label>
+            <input type="number" id="actualQuantity" placeholder="Введите фактическое количество" 
+                   min="0" value="{{ report.actual_quantity if report else '' }}">
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="actualStartTime">Фактическое время начала:</label>
+                <input type="datetime-local" id="actualStartTime" 
+                       value="{{ report.actual_start_time if report else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="actualEndTime">Фактическое время окончания:</label>
+                <input type="datetime-local" id="actualEndTime" 
+                       value="{{ report.actual_end_time if report else '' }}">
+            </div>
+        </div>
+        
+        <div class="defects-section">
+            <h4>Дефекты производства:</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bubbleCount">Пузыри (bubble_count):</label>
+                    <input type="number" id="bubbleCount" placeholder="0" 
+                           min="0" value="{{ report.bubble_count if report else '0' }}">
+                </div>
+                <div class="form-group">
+                    <label for="underfillCount">Недолив (underfill_count):</label>
+                    <input type="number" id="underfillCount" placeholder="0" 
+                           min="0" value="{{ report.underfill_count if report else '0' }}">
+                </div>
+                <div class="form-group">
+                    <label for="inclusionCount">Включения (inclusion_count):</label>
+                    <input type="number" id="inclusionCount" placeholder="0" 
+                           min="0" value="{{ report.inclusion_count if report else '0' }}">
+                </div>
+            </div>
+            <div class="total-defects">
+                <strong>Общее количество дефектов: <span id="totalDefects">0</span></strong>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="saveProductionReport()" class="save-btn">
+                {{ 'Обновить отчет' if report else 'Сохранить отчет' }}
+            </button>
+            <button onclick="goBack()" class="cancel-btn">Отмена</button>
+        </div>
+        
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Устанавливаем время по умолчанию при загрузке страницы
+        function setDefaultTimes() {
+            const now = new Date();
+            const actualStartTimeInput = document.getElementById('actualStartTime');
+            const actualEndTimeInput = document.getElementById('actualEndTime');
+            
+            // Форматируем дату для input[type="datetime-local"]
+            const formatDateTime = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+            
+            // Устанавливаем время начала на текущее время, если поле пустое
+            if (!actualStartTimeInput.value) {
+                actualStartTimeInput.value = formatDateTime(now);
+            }
+            
+            // Устанавливаем время окончания на 1 час позже, если поле пустое
+            if (!actualEndTimeInput.value) {
+                const endTime = new Date(now);
+                endTime.setHours(endTime.getHours() + 1);
+                actualEndTimeInput.value = formatDateTime(endTime);
+            }
+        }
+        
+        // Функция расчета общего количества дефектов
+        function calculateTotalDefects() {
+            const bubbleCount = parseInt(document.getElementById('bubbleCount').value) || 0;
+            const underfillCount = parseInt(document.getElementById('underfillCount').value) || 0;
+            const inclusionCount = parseInt(document.getElementById('inclusionCount').value) || 0;
+            const totalDefects = bubbleCount + underfillCount + inclusionCount;
+            document.getElementById('totalDefects').textContent = totalDefects;
+            return totalDefects;
+        }
+        
+        // Функция сохранения отчета по производству
+        function saveProductionReport() {
+            const orderId = document.getElementById('orderId').value;
+            const partNumberInput = document.getElementById('partNumber');
+            const actualQuantityInput = document.getElementById('actualQuantity');
+            const bubbleCountInput = document.getElementById('bubbleCount');
+            const underfillCountInput = document.getElementById('underfillCount');
+            const inclusionCountInput = document.getElementById('inclusionCount');
+            const actualStartTimeInput = document.getElementById('actualStartTime');
+            const actualEndTimeInput = document.getElementById('actualEndTime');
+            
+            const partNumber = partNumberInput.value.trim();
+            const actualQuantity = actualQuantityInput.value.trim();
+            const bubbleCount = bubbleCountInput.value.trim();
+            const underfillCount = underfillCountInput.value.trim();
+            const inclusionCount = inclusionCountInput.value.trim();
+            const actualStartTime = actualStartTimeInput.value;
+            const actualEndTime = actualEndTimeInput.value;
+            const messageDiv = document.getElementById('message');
+            
+            // Валидация
+            if (!actualQuantity) {
+                showMessage('Введите фактическое количество', 'error');
+                actualQuantityInput.focus();
+                return;
+            }
+            
+            if (!actualStartTime) {
+                showMessage('Введите фактическое время начала', 'error');
+                actualStartTimeInput.focus();
+                return;
+            }
+            
+            if (!actualEndTime) {
+                showMessage('Введите фактическое время окончания', 'error');
+                actualEndTimeInput.focus();
+                return;
+            }
+            
+            if (parseInt(actualQuantity) < 0) {
+                showMessage('Фактическое количество не может быть отрицательным', 'error');
+                actualQuantityInput.focus();
+                return;
+            }
+            
+            if (new Date(actualEndTime) <= new Date(actualStartTime)) {
+                showMessage('Фактическое время окончания должно быть позже времени начала', 'error');
+                actualEndTimeInput.focus();
+                return;
+            }
+            
+            // Вычисляем общее количество дефектов
+            const totalDefects = calculateTotalDefects();
+            
+            // Подготовка данных для отправки
+            const data = { 
+                order_id: orderId,
+                part_number: partNumber,
+                actual_quantity: actualQuantity,
+                bubble_count: bubbleCount || 0,
+                underfill_count: underfillCount || 0,
+                inclusion_count: inclusionCount || 0,
+                actual_start_time: actualStartTime,
+                actual_end_time: actualEndTime
+            };
+            
+            // Отправляем данные на сервер
+            fetch('/save_production_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Через 2 секунды возвращаемся назад
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                } else {
+                    showMessage('Ошибка: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Функция отображения сообщений
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Автоматически скрываем сообщение через 5 секунд
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Функция возврата назад
+        function goBack() {
+            window.close();
+        }
+        
+        // Сохранение по нажатию Enter (при фокусе на любом поле)
+        const inputs = document.querySelectorAll('.dialog input');
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveProductionReport();
+                }
+            });
+        });
+        
+        // Обновление общего количества дефектов при изменении значений
+        document.getElementById('bubbleCount').addEventListener('input', calculateTotalDefects);
+        document.getElementById('underfillCount').addEventListener('input', calculateTotalDefects);
+        document.getElementById('inclusionCount').addEventListener('input', calculateTotalDefects);
+        
+        // Загружаем данные при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            setDefaultTimes();
+            calculateTotalDefects(); // Рассчитываем начальное значение
+        });
+    </script>
+</body>
+</html>

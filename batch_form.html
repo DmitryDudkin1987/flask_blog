@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Учет производственных партий</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .input-with-unit {
+            position: relative;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        input[type="number"]:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        .unit {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+            font-weight: 500;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .form-column {
+            flex: 1;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .message {
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 5px solid #4caf50;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 5px solid #f44336;
+        }
+        .form-footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2196f3;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #0d47a1;
+            font-size: 16px;
+        }
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+            color: #333;
+        }
+        .info-box li {
+            margin-bottom: 5px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                margin: 20px auto;
+            }
+            .container {
+                padding: 25px;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Учет производственных партий</h1>
+        <div class="subtitle">Введите данные производственной партии</div>
+        
+        <div class="info-box">
+            <h3>Информация о полях:</h3>
+            <ul>
+                <li><strong>План производства</strong> - планируемое количество деталей</li>
+                <li><strong>Фактическое производство</strong> - реально произведенное количество</li>
+                <li>Данные сохраняются в таблицу <strong>batch</strong></li>
+                <li>Поле <strong>counter</strong> автоматически устанавливается в 0</li>
+            </ul>
+        </div>
+        
+        {% if message %}
+        <div class="message {{ 'success' if message_type == 'success' else 'error' }}">
+            {{ message|safe }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/">
+            <div class="form-row">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="plan">ПЛАН ПРОИЗВОДСТВА</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="plan" name="plan" 
+                                   required step="0.01" min="0"
+                                   placeholder="0.00"
+                                   value="{{ plan }}"
+                                   autocomplete="off">
+                            <span class="unit">шт.</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="actual">ФАКТИЧЕСКОЕ ПРОИЗВОДСТВО</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="actual" name="actual" 
+                                   required step="0.01" min="0"
+                                   placeholder="0.00"
+                                   value="{{ actual }}"
+                                   autocomplete="off">
+                            <span class="unit">шт.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">Сохранить данные партии</button>
+        </form>
+        
+        <div class="form-footer">
+            <p>Система учета производственных показателей</p>
+            <p>© 2024 Производственный учет</p>
+        </div>
+    </div>
+</body>
+</html>
