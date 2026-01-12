@@ -1,367 +1,432 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Внесение событий - Батч #{{ batch.id }}</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>События производства | Система управления производством Nissan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --nissan-red: #C3002F;
+            --nissan-dark: #1D1D1F;
+            --nissan-light: #F5F5F7;
+            --nissan-gray: #86868B;
+        }
+        
         body {
-            margin: 20px;
-            background: white;
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--nissan-light);
+            color: var(--nissan-dark);
+            min-height: 100vh;
         }
-        .header {
+        
+        .navbar-brand img {
+            height: 32px;
+            margin-right: 12px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #D1D1D6;
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--nissan-red);
+            box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--nissan-red);
+            border-color: var(--nissan-red);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-outline-danger {
+            border-radius: 6px;
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        .user-info {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ccc;
+            gap: 1rem;
+            color: var(--nissan-dark);
         }
-        .logout {
-            color: #dc3545;
-            border: 1px solid #dc3545;
-            background: transparent;
-            padding: 8px 15px;
-            cursor: pointer;
+        
+        .logout-btn {
+            color: var(--nissan-red);
             text-decoration: none;
-            display: inline-block;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.5;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
-        .logout:hover {
-            background: #dc3545;
-            color: white;
+        
+        .logout-btn:hover {
+            background-color: rgba(195, 0, 47, 0.1);
+            color: #A80028;
+        }
+        
+        .back-btn {
+            color: var(--nissan-gray);
             text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s ease;
         }
-        .back-link {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 20px;
+        
+        .back-btn:hover {
+            color: var(--nissan-dark);
         }
-        .back-link:hover {
-            text-decoration: underline;
-        }
+        
         .batch-info {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .batch-info h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .batch-info-grid {
+        
+        .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            gap: 1rem;
+            margin-top: 1rem;
         }
+        
         .info-item {
-            padding: 5px 0;
+            display: flex;
+            flex-direction: column;
         }
+        
         .info-label {
-            font-weight: bold;
-            color: #666;
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
         }
-        .form-container {
-            max-width: 600px;
-            margin: 30px auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background: #f9f9f9;
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 1.125rem;
         }
-        .form-container h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .form-container input,
-        .form-container select {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            box-sizing: border-box;
-        }
-        .form-container .save-btn {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background: #0d6efd;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 400;
-            line-height: 1.5;
-            margin-top: 10px;
-            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-        }
-        .form-container .save-btn:hover {
-            background: #0b5ed7;
-        }
-        .events-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-        }
-        .events-table th,
-        .events-table td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: left;
-        }
-        .events-table th {
-            background: #f5f5f5;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-        }
-        .events-table th:hover {
-            background: #e9e9e9;
-        }
-        .events-table th.sortable::after {
-            content: "↕";
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #999;
-            font-size: 12px;
-        }
-        .events-table th.sorted-asc::after {
-            content: "↑";
-            color: #007bff;
-        }
-        .events-table th.sorted-desc::after {
-            content: "↓";
-            color: #007bff;
-        }
-        .events-table tr:hover {
-            background: #f9f9f9;
-        }
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        .delete-btn:hover {
-            background: #c82333;
-        }
-        .message {
-            margin-top: 10px;
-            padding: 10px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-            border-radius: 3px;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        
         .time-group-badge {
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
         }
-        .planned-pause {
-            background: #ffc107;
-            color: #212529;
+        
+        .badge-planned {
+            background-color: rgba(255, 204, 0, 0.2);
+            color: #BF7A00;
+            border: 1px solid rgba(255, 204, 0, 0.3);
         }
-        .utilization {
-            background: #28a745;
-            color: white;
+        
+        .badge-utilization {
+            background-color: rgba(52, 199, 89, 0.2);
+            color: #1D7E36;
+            border: 1px solid rgba(52, 199, 89, 0.3);
         }
-        .breakdown {
-            background: #dc3545;
-            color: white;
+        
+        .badge-breakdown {
+            background-color: rgba(255, 59, 48, 0.2);
+            color: #D70015;
+            border: 1px solid rgba(255, 59, 48, 0.3);
         }
+        
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            font-weight: 600;
+            color: var(--nissan-gray);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: none;
+            border-bottom: 2px solid #E5E5EA;
+            padding: 1rem 0.75rem;
+        }
+        
+        .table td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #E5E5EA;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(195, 0, 47, 0.04);
+        }
+        
         .overlapping-event {
-            background-color: #ffebee !important;
-            border-left: 3px solid #dc3545;
+            background-color: rgba(255, 59, 48, 0.1) !important;
+            border-left: 3px solid #D70015;
         }
-        /* Скрытые поля для передачи данных из шаблона в JavaScript */
-        .hidden-data {
+        
+        .message {
             display: none;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        .message.success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #1D7E36;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #D70015;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
+        
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .time-inputs {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Скрытые поля для передачи данных из шаблона в JavaScript -->
-    <div class="hidden-data">
-        <span id="batchStartTime">{{ batch.start_time }}</span>
-        <span id="batchEndTime">{{ batch.end_time }}</span>
-    </div>
-
-    <div class="header">
-        <div>
-            <a href="/home" class="back-link">← На главную</a>
-            <span>Пользователь: <strong>{{ username }}</strong></span>
-        </div>
-        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
-    </div>
-
-    <div class="batch-info">
-        <h3>Информация о производственном батче</h3>
-        <div class="batch-info-grid">
-            <div class="info-item">
-                <span class="info-label">ID батча:</span> {{ batch.id }}
-            </div>
-            <div class="info-item">
-                <span class="info-label">Название детали:</span> {{ batch.part_name }}
-            </div>
-            <div class="info-item">
-                <span class="info-label">Планируемое количество:</span> {{ batch.planned_quantity }}
-            </div>
-            <div class="info-item">
-                <span class="info-label">Номер станка:</span> {{ batch.machine_number }}
-            </div>
-            <div class="info-item">
-                <span class="info-label">Планируемое время начала:</span> {{ batch.start_time }}
-            </div>
-            <div class="info-item">
-                <span class="info-label">Планируемое время окончания:</span> {{ batch.end_time }}
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg" alt="Nissan Logo">
+                <span style="font-weight: 600; color: var(--nissan-dark);">Производственная система</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-info">
+                    <span><strong>{{ username }}</strong></span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+                </div>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="form-container">
-        <h3>Внести новое событие</h3>
-        <input type="hidden" id="batchId" value="{{ batch.id }}">
+    <!-- Основной контент -->
+    <main class="container py-4">
+        <a href="/home" class="back-btn">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Назад к списку
+        </a>
         
-        <input type="text" id="eventName" placeholder="Название события" required>
+        <!-- Информация о батче -->
+        <div class="batch-info">
+            <h4 class="mb-3">Батч #{{ batch.id }}</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Деталь</span>
+                    <span class="info-value">{{ batch.part_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Планируемое количество</span>
+                    <span class="info-value">{{ batch.planned_quantity }} шт</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Станок</span>
+                    <span class="info-value">№ {{ batch.machine_number }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Плановое начало</span>
+                    <span class="info-value">{{ batch.start_time }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Плановое окончание</span>
+                    <span class="info-value">{{ batch.end_time }}</span>
+                </div>
+            </div>
+        </div>
         
-        <input type="datetime-local" id="actualStartTime" placeholder="Фактическое время начала" required>
-        <input type="datetime-local" id="actualEndTime" placeholder="Фактическое время окончания" required>
-        
-        <select id="timeGroup" required>
-            <option value="">Выберите группу времени</option>
-            <option value="Planned pause time">Planned pause time</option>
-            <option value="Utilization hours">Utilization hours</option>
-            <option value="Breakdown time">Breakdown time</option>
-        </select>
-        
-        <button class="save-btn" onclick="saveEvent()">Сохранить событие</button>
-        
-        <div id="message" class="message"></div>
-    </div>
+        <div class="row">
+            <!-- Форма добавления события -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Добавить событие</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="batchId" value="{{ batch.id }}">
+                        
+                        <div class="mb-3">
+                            <label for="eventName" class="form-label">Название события</label>
+                            <input type="text" class="form-control" id="eventName" placeholder="Введите название события">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Временной интервал</label>
+                            <div class="time-inputs">
+                                <div>
+                                    <label for="actualStartTime" class="form-label small">Начало</label>
+                                    <input type="datetime-local" class="form-control" id="actualStartTime">
+                                </div>
+                                <div>
+                                    <label for="actualEndTime" class="form-label small">Окончание</label>
+                                    <input type="datetime-local" class="form-control" id="actualEndTime">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="timeGroup" class="form-label">Группа времени</label>
+                            <select class="form-select" id="timeGroup">
+                                <option value="">Выберите группу</option>
+                                <option value="Planned pause time">Planned pause time</option>
+                                <option value="Utilization hours">Utilization hours</option>
+                                <option value="Breakdown time">Breakdown time</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="saveEvent()" class="btn btn-primary w-100">Добавить событие</button>
+                        
+                        <div id="message" class="message"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Список событий -->
+            <div class="col-lg-8">
+                <h5 class="mb-3">События батча</h5>
+                
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="eventsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Событие</th>
+                                    <th>Начало</th>
+                                    <th>Окончание</th>
+                                    <th>Группа</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsBody">
+                                {% for event in events %}
+                                <tr id="event-{{ event.event_id }}">
+                                    <td>{{ event.event_id }}</td>
+                                    <td>{{ event.event_name }}</td>
+                                    <td>{{ event.actual_start_time }}</td>
+                                    <td>{{ event.actual_end_time }}</td>
+                                    <td>
+                                        <span class="time-group-badge 
+                                            {% if event.time_group == 'Planned pause time' %}badge-planned
+                                            {% elif event.time_group == 'Utilization hours' %}badge-utilization
+                                            {% elif event.time_group == 'Breakdown time' %}badge-breakdown{% endif %}">
+                                            {{ event.time_group }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent({{ event.event_id }})">
+                                            Удалить
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not events %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        Нет событий для этого батча
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-    <div id="eventsContainer">
-        <h3>Существующие события для батча #{{ batch.id }}</h3>
-        <table class="events-table" id="eventsTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Название события</th>
-                    <th class="sortable" id="sortStartTime" data-sort="start" data-direction="asc">Время начала</th>
-                    <th>Время окончания</th>
-                    <th>Группа времени</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody id="eventsBody">
-                {% for event in events %}
-                <tr id="event-{{ event.event_id }}">
-                    <td>{{ event.event_id }}</td>
-                    <td>{{ event.event_name }}</td>
-                    <td data-sort-value="{{ event.actual_start_time }}">{{ event.actual_start_time }}</td>
-                    <td>{{ event.actual_end_time }}</td>
-                    <td>
-                        <span class="time-group-badge 
-                            {% if event.time_group == 'Planned pause time' %}planned-pause
-                            {% elif event.time_group == 'Utilization hours' %}utilization
-                            {% elif event.time_group == 'Breakdown time' %}breakdown{% endif %}">
-                            {{ event.time_group }}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="delete-btn" onclick="deleteEvent({{ event.event_id }})">Удалить</button>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not events %}
-                <tr>
-                    <td colspan="6" style="text-align: center; color: #999; padding: 20px;">
-                        Нет событий для этого батча
-                    </td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // Глобальные переменные для сортировки
-        let currentSortColumn = 'start';
-        let currentSortDirection = 'asc';
-        let eventsData = []; // Массив для хранения данных событий
-        
-        // Получаем плановое время начала и окончания батча из скрытых полей
+        // Глобальные переменные для временных границ
         let batchStartTime = null;
         let batchEndTime = null;
         let minAllowedTime = null;
         let maxAllowedTime = null;
 
-        // Функция преобразования строки времени из таблицы в объект Date
-        function parseTableTime(timeString) {
-            // Преобразуем формат "2024-01-01 10:00:00" в "2024-01-01T10:00:00"
-            return new Date(timeString.replace(' ', 'T'));
-        }
-        
         // Инициализация временных границ батча
         function initBatchTimeBounds() {
             try {
-                const startTimeStr = document.getElementById('batchStartTime').textContent;
-                const endTimeStr = document.getElementById('batchEndTime').textContent;
+                const startTimeStr = '{{ batch.start_time }}';
+                const endTimeStr = '{{ batch.end_time }}';
                 
-                batchStartTime = parseTableTime(startTimeStr);
-                batchEndTime = parseTableTime(endTimeStr);
+                // Преобразуем строку времени в объект Date
+                batchStartTime = new Date(startTimeStr.replace(' ', 'T'));
+                batchEndTime = new Date(endTimeStr.replace(' ', 'T'));
                 
-                // Вычисляем допустимые границы: 3 часа до планового начала и 3 часа после планового окончания
+                // Вычисляем допустимые границы: 3 часа до и после
                 minAllowedTime = new Date(batchStartTime.getTime() - (3 * 60 * 60 * 1000));
                 maxAllowedTime = new Date(batchEndTime.getTime() + (3 * 60 * 60 * 1000));
                 
-                console.log('Плановое время батча:', batchStartTime, 'до', batchEndTime);
                 console.log('Допустимые границы для событий:', minAllowedTime, 'до', maxAllowedTime);
             } catch (error) {
-                console.error('Ошибка при инициализации временных границ батча:', error);
+                console.error('Ошибка при инициализации временных границ:', error);
                 showMessage('Ошибка при загрузке данных о времени батча', 'error');
             }
         }
         
-        // Функция проверки времени события относительно планового времени батча
+        // Проверка времени события
         function checkEventTimeBounds(startTime, endTime) {
             if (!minAllowedTime || !maxAllowedTime) {
-                console.error('Временные границы батча не инициализированы');
                 return {
                     isValid: false,
-                    message: 'Ошибка: временные границы батча не загружены'
+                    message: 'Ошибка: временные границы не загружены'
                 };
             }
             
-            // Проверяем, что время события находится в пределах ±3 часа от планового времени батча
             if (startTime < minAllowedTime) {
                 const diffHours = (minAllowedTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
                 return {
                     isValid: false,
-                    message: `Время начала события слишком раннее. Допустимое начало: не ранее ${formatDateTimeForMessage(minAllowedTime)} (на ${diffHours.toFixed(1)} часа раньше, чем разрешено)`
+                    message: `Время начала слишком раннее. Минимальное время: ${formatDateTime(minAllowedTime)}`
                 };
             }
             
@@ -369,30 +434,8 @@
                 const diffHours = (endTime.getTime() - maxAllowedTime.getTime()) / (1000 * 60 * 60);
                 return {
                     isValid: false,
-                    message: `Время окончания события слишком позднее. Допустимое окончание: не позднее ${formatDateTimeForMessage(maxAllowedTime)} (на ${diffHours.toFixed(1)} часа позже, чем разрешено)`
+                    message: `Время окончания слишком позднее. Максимальное время: ${formatDateTime(maxAllowedTime)}`
                 };
-            }
-            
-            // Дополнительная проверка: время события должно быть в пределах самого батча?
-            // По условию требуется только проверка ±3 часа, но можно добавить и эту проверку
-            if (startTime > batchEndTime) {
-                const diffHours = (startTime.getTime() - batchEndTime.getTime()) / (1000 * 60 * 60);
-                if (diffHours > 3) {
-                    return {
-                        isValid: false,
-                        message: `Время начала события значительно позже планового окончания батча (на ${diffHours.toFixed(1)} часов)`
-                    };
-                }
-            }
-            
-            if (endTime < batchStartTime) {
-                const diffHours = (batchStartTime.getTime() - endTime.getTime()) / (1000 * 60 * 60);
-                if (diffHours > 3) {
-                    return {
-                        isValid: false,
-                        message: `Время окончания события значительно раньше планового начала батча (на ${diffHours.toFixed(1)} часов)`
-                    };
-                }
             }
             
             return {
@@ -401,11 +444,10 @@
             };
         }
         
-        // Форматирование даты для сообщения
-        function formatDateTimeForMessage(date) {
-            if (!date) return 'не указано';
+        // Форматирование даты
+        function formatDateTime(date) {
+            if (!date) return '';
             
-            // Форматируем дату в удобочитаемый вид
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
@@ -415,17 +457,15 @@
             return `${day}.${month}.${year} ${hours}:${minutes}`;
         }
         
-        // Функция проверки пересечения временных интервалов
+        // Проверка пересечения временных интервалов
         function checkTimeOverlap(newStart, newEnd) {
             const rows = document.querySelectorAll('#eventsBody tr[id^="event-"]');
             
             for (let row of rows) {
                 const cells = row.querySelectorAll('td');
-                // Время начала в 3-й колонке (индекс 2), окончания в 4-й (индекс 3)
-                const existingStart = parseTableTime(cells[2].textContent);
-                const existingEnd = parseTableTime(cells[3].textContent);
+                const existingStart = new Date(cells[2].textContent.replace(' ', 'T'));
+                const existingEnd = new Date(cells[3].textContent.replace(' ', 'T'));
                 
-                // Проверяем пересечение интервалов (исключаем граничные совпадения)
                 if (newStart < existingEnd && newEnd > existingStart) {
                     return {
                         hasOverlap: true,
@@ -437,7 +477,7 @@
             return { hasOverlap: false };
         }
         
-        // Функция для подсветки пересекающихся событий
+        // Подсветка пересекающихся событий
         function highlightOverlappingEvents(newStart, newEnd) {
             const rows = document.querySelectorAll('#eventsBody tr[id^="event-"]');
             
@@ -445,17 +485,16 @@
                 row.classList.remove('overlapping-event');
                 
                 const cells = row.querySelectorAll('td');
-                const existingStart = parseTableTime(cells[2].textContent);
-                const existingEnd = parseTableTime(cells[3].textContent);
+                const existingStart = new Date(cells[2].textContent.replace(' ', 'T'));
+                const existingEnd = new Date(cells[3].textContent.replace(' ', 'T'));
                 
-                // Проверяем пересечение
                 if (newStart < existingEnd && newEnd > existingStart) {
                     row.classList.add('overlapping-event');
                 }
             });
         }
         
-        // Функция сброса подсветки
+        // Сброс подсветки
         function resetHighlight() {
             const rows = document.querySelectorAll('#eventsBody tr[id^="event-"]');
             rows.forEach(row => {
@@ -463,116 +502,7 @@
             });
         }
         
-        // Функция сортировки событий
-        function sortEvents() {
-            const tbody = document.getElementById('eventsBody');
-            const rows = Array.from(tbody.querySelectorAll('tr[id^="event-"]'));
-            
-            if (rows.length === 0) return;
-            
-            // Сортируем строки таблицы
-            rows.sort((a, b) => {
-                const aCells = a.querySelectorAll('td');
-                const bCells = b.querySelectorAll('td');
-                
-                let aValue, bValue;
-                
-                // Выбираем значение для сортировки в зависимости от колонки
-                if (currentSortColumn === 'start') {
-                    // Сортировка по времени начала
-                    aValue = parseTableTime(aCells[2].textContent);
-                    bValue = parseTableTime(bCells[2].textContent);
-                } else if (currentSortColumn === 'end') {
-                    // Сортировка по времени окончания
-                    aValue = parseTableTime(aCells[3].textContent);
-                    bValue = parseTableTime(bCells[3].textContent);
-                } else if (currentSortColumn === 'name') {
-                    // Сортировка по названию
-                    aValue = aCells[1].textContent.toLowerCase();
-                    bValue = bCells[1].textContent.toLowerCase();
-                } else if (currentSortColumn === 'id') {
-                    // Сортировка по ID
-                    aValue = parseInt(aCells[0].textContent);
-                    bValue = parseInt(bCells[0].textContent);
-                }
-                
-                // Сравниваем значения
-                if (aValue < bValue) {
-                    return currentSortDirection === 'asc' ? -1 : 1;
-                } else if (aValue > bValue) {
-                    return currentSortDirection === 'asc' ? 1 : -1;
-                }
-                return 0;
-            });
-            
-            // Удаляем все строки из таблицы
-            rows.forEach(row => tbody.removeChild(row));
-            
-            // Добавляем отсортированные строки обратно
-            rows.forEach(row => tbody.appendChild(row));
-            
-            // Обновляем индикаторы сортировки
-            updateSortIndicators();
-        }
-        
-        // Функция обновления индикаторов сортировки
-        function updateSortIndicators() {
-            // Сбрасываем все индикаторы
-            document.querySelectorAll('.sortable').forEach(th => {
-                th.classList.remove('sorted-asc', 'sorted-desc');
-            });
-            
-            // Устанавливаем индикатор для текущей колонки
-            const sortHeader = document.getElementById(`sort${currentSortColumn.charAt(0).toUpperCase() + currentSortColumn.slice(1)}`);
-            if (sortHeader) {
-                if (currentSortDirection === 'asc') {
-                    sortHeader.classList.add('sorted-asc');
-                } else {
-                    sortHeader.classList.add('sorted-desc');
-                }
-            }
-        }
-        
-        // Функция обработки клика по заголовку для сортировки
-        function setupSorting() {
-            document.querySelectorAll('.sortable').forEach(th => {
-                th.addEventListener('click', function() {
-                    const sortType = this.getAttribute('data-sort');
-                    
-                    // Если кликнули по той же колонке, меняем направление сортировки
-                    if (currentSortColumn === sortType) {
-                        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        // Иначе сортируем по новой колонке по возрастанию
-                        currentSortColumn = sortType;
-                        currentSortDirection = 'asc';
-                    }
-                    
-                    // Обновляем атрибут направления в элементе
-                    this.setAttribute('data-direction', currentSortDirection);
-                    
-                    // Выполняем сортировку
-                    sortEvents();
-                });
-            });
-        }
-        
-        // Функция сортировки при загрузке данных
-        function sortOnLoad() {
-            // Инициализируем данные событий из таблицы
-            const rows = document.querySelectorAll('#eventsBody tr[id^="event-"]');
-            eventsData = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                return {
-                    id: row.id.replace('event-', ''),
-                    cells: Array.from(cells).map(cell => cell.innerHTML)
-                };
-            });
-            
-            // Сортируем по умолчанию по времени начала (по возрастанию)
-            sortEvents();
-        }
-        
+        // Установка времени по умолчанию
         function setDefaultTimes() {
             const now = new Date();
             const startTimeInput = document.getElementById('actualStartTime');
@@ -598,10 +528,10 @@
                 endTimeInput.value = formatDateTime(endTime);
             }
             
-            // Сброс подсветки при установке времени по умолчанию
             resetHighlight();
         }
         
+        // Сохранение события
         function saveEvent() {
             const batchId = document.getElementById('batchId').value;
             const eventNameInput = document.getElementById('eventName');
@@ -615,10 +545,8 @@
             const timeGroup = timeGroupSelect.value;
             const messageDiv = document.getElementById('message');
             
-            // Сброс подсветки перед проверкой
             resetHighlight();
             
-            // Валидация заполнения полей
             if (!eventName) {
                 showMessage('Введите название события', 'error');
                 eventNameInput.focus();
@@ -626,13 +554,13 @@
             }
             
             if (!actualStartTime) {
-                showMessage('Введите время начала события', 'error');
+                showMessage('Введите время начала', 'error');
                 startTimeInput.focus();
                 return;
             }
             
             if (!actualEndTime) {
-                showMessage('Введите время окончания события', 'error');
+                showMessage('Введите время окончания', 'error');
                 endTimeInput.focus();
                 return;
             }
@@ -646,30 +574,27 @@
             const startTime = new Date(actualStartTime);
             const endTime = new Date(actualEndTime);
             
-            // Проверка корректности временного интервала
             if (endTime <= startTime) {
                 showMessage('Время окончания должно быть позже времени начала', 'error');
                 endTimeInput.focus();
                 return;
             }
             
-            // ПРОВЕРКА: Время события должно быть в пределах ±3 часа от планового времени батча
+            // Проверка временных границ
             const timeBoundsCheck = checkEventTimeBounds(startTime, endTime);
             if (!timeBoundsCheck.isValid) {
                 showMessage(timeBoundsCheck.message, 'error');
                 return;
             }
             
-            // Проверка на пересечение с существующими событиями
+            // Проверка на пересечение
             const overlapCheck = checkTimeOverlap(startTime, endTime);
             if (overlapCheck.hasOverlap) {
-                showMessage(`Ошибка: временной интервал пересекается с событием "${overlapCheck.overlappingEventName}"`, 'error');
-                // Подсвечиваем пересекающееся событие
+                showMessage(`Ошибка: пересечение с событием "${overlapCheck.overlappingEventName}"`, 'error');
                 highlightOverlappingEvents(startTime, endTime);
                 return;
             }
             
-            // Подготовка данных для отправки
             const data = {
                 batch_id: batchId,
                 event_name: eventName,
@@ -678,7 +603,6 @@
                 time_group: timeGroup
             };
             
-            // Отправка данных на сервер
             fetch('/save_event', {
                 method: 'POST',
                 headers: {
@@ -690,16 +614,12 @@
             .then(data => {
                 if (data.success) {
                     showMessage(data.message, 'success');
-                    // Очистка формы
                     eventNameInput.value = '';
                     setDefaultTimes();
                     timeGroupSelect.value = '';
-                    // Обновление таблицы
                     updateEventsTable(data.events);
-                    // Сброс подсветки
                     resetHighlight();
                 } else {
-                    // Если сервер вернул ошибку о пересечении
                     if (data.error && data.error.includes('пересекается')) {
                         highlightOverlappingEvents(startTime, endTime);
                     }
@@ -712,6 +632,7 @@
             });
         }
         
+        // Удаление события
         function deleteEvent(eventId) {
             if (!confirm('Вы уверены, что хотите удалить это событие?')) {
                 return;
@@ -725,7 +646,6 @@
                 if (data.success) {
                     showMessage(data.message, 'success');
                     updateEventsTable(data.events);
-                    // Сброс подсветки после удаления
                     resetHighlight();
                 } else {
                     showMessage('Ошибка: ' + data.error, 'error');
@@ -737,6 +657,7 @@
             });
         }
         
+        // Обновление таблицы событий
         function updateEventsTable(events) {
             const tbody = document.getElementById('eventsBody');
             tbody.innerHTML = '';
@@ -746,13 +667,9 @@
                 const cell = document.createElement('td');
                 cell.colSpan = 6;
                 cell.textContent = 'Нет событий для этого батча';
-                cell.style.textAlign = 'center';
-                cell.style.color = '#999';
-                cell.style.padding = '20px';
+                cell.className = 'text-center text-muted py-4';
                 row.appendChild(cell);
                 tbody.appendChild(row);
-                // Обновляем индикаторы сортировки
-                updateSortIndicators();
                 return;
             }
             
@@ -766,11 +683,11 @@
                 
                 const nameCell = document.createElement('td');
                 nameCell.textContent = event.event_name;
+                nameCell.className = 'fw-medium';
                 row.appendChild(nameCell);
                 
                 const startCell = document.createElement('td');
                 startCell.textContent = event.actual_start_time;
-                startCell.setAttribute('data-sort-value', event.actual_start_time);
                 row.appendChild(startCell);
                 
                 const endCell = document.createElement('td');
@@ -782,11 +699,11 @@
                 badge.className = 'time-group-badge ';
                 
                 if (event.time_group === 'Planned pause time') {
-                    badge.className += 'planned-pause';
+                    badge.className += 'badge-planned';
                 } else if (event.time_group === 'Utilization hours') {
-                    badge.className += 'utilization';
+                    badge.className += 'badge-utilization';
                 } else if (event.time_group === 'Breakdown time') {
-                    badge.className += 'breakdown';
+                    badge.className += 'badge-breakdown';
                 }
                 
                 badge.textContent = event.time_group;
@@ -795,7 +712,7 @@
                 
                 const actionsCell = document.createElement('td');
                 const deleteButton = document.createElement('button');
-                deleteButton.className = 'delete-btn';
+                deleteButton.className = 'btn btn-outline-danger btn-sm';
                 deleteButton.textContent = 'Удалить';
                 deleteButton.onclick = function() {
                     deleteEvent(event.event_id);
@@ -805,11 +722,9 @@
                 
                 tbody.appendChild(row);
             });
-            
-            // После обновления таблицы применяем текущую сортировку
-            sortEvents();
         }
         
+        // Показать сообщение
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
@@ -821,7 +736,7 @@
             }, 5000);
         }
         
-        // Обработчики событий для проверки пересечений в реальном времени
+        // Валидация в реальном времени
         function setupRealTimeValidation() {
             const startTimeInput = document.getElementById('actualStartTime');
             const endTimeInput = document.getElementById('actualEndTime');
@@ -847,12 +762,10 @@
             
             startTimeInput.addEventListener('change', validateTimeInputs);
             endTimeInput.addEventListener('change', validateTimeInputs);
-            startTimeInput.addEventListener('input', validateTimeInputs);
-            endTimeInput.addEventListener('input', validateTimeInputs);
         }
         
-        // Обработчики для сохранения по Enter
-        const inputs = document.querySelectorAll('.form-container input, .form-container select');
+        // Обработчики для Enter
+        const inputs = document.querySelectorAll('#eventName, #actualStartTime, #actualEndTime, #timeGroup');
         inputs.forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -861,15 +774,11 @@
             });
         });
         
-        // Инициализация при загрузке страницы
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
-            // Инициализируем временные границы батча
             initBatchTimeBounds();
-            
             setDefaultTimes();
             setupRealTimeValidation();
-            setupSorting();
-            sortOnLoad();
         });
     </script>
 </body>

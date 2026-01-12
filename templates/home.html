@@ -1,177 +1,318 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Главная</title>
     <meta charset="utf-8">
-    <!-- Подключение Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Главная | Система управления производством Nissan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --nissan-red: #C3002F;
+            --nissan-dark: #1D1D1F;
+            --nissan-light: #F5F5F7;
+            --nissan-gray: #86868B;
+        }
+        
         body {
-            margin: 20px;
-            background: white;
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--nissan-light);
+            color: var(--nissan-dark);
+            min-height: 100vh;
         }
-        .header {
-            text-align: right;
-            margin-bottom: 30px;
+        
+        .navbar-brand img {
+            height: 32px;
+            margin-right: 12px;
         }
-        .logout {
-            background: #d00;
-            color: white;
+        
+        .card {
             border: none;
-            padding: 8px 15px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+            overflow: hidden;
         }
-        .dialog {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            border: 1px solid #ccc;
+        
+        .card:hover {
+            transform: translateY(-2px);
         }
-        .dialog input {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 1.25rem;
         }
-        .message {
-            margin-top: 10px;
-            padding: 8px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
+        
+        .card-body {
+            padding: 1.5rem;
         }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #D1D1D6;
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
         }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--nissan-red);
+            box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1);
         }
-        .records-table {
-            max-width: 1000px;
-            margin: 50px auto;
-            border: 1px solid #ccc;
-            border-collapse: collapse;
-            font-size: 12px;
+        
+        .btn-primary {
+            background-color: var(--nissan-red);
+            border-color: var(--nissan-red);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
-        .records-table th,
-        .records-table td {
-            padding: 6px;
-            border: 1px solid #ccc;
-            text-align: left;
-            cursor: pointer;
+        
+        .btn-primary:hover {
+            background-color: #A80028;
+            border-color: #A80028;
+            transform: translateY(-1px);
         }
-        .records-table th {
-            background: #f5f5f5;
-            font-weight: bold;
-            cursor: default;
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--nissan-dark);
+            border: 1px solid #D1D1D6;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
         }
-        .records-table tr:hover {
-            background: #f9f9f9;
+        
+        .btn-secondary:hover {
+            background-color: #F5F5F7;
+            border-color: #8E8E93;
         }
-        .records-table tr.selected {
-            background: #e3f2fd;
+        
+        .btn-danger {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
         }
-        .time-fields {
-            display: flex;
-            gap: 10px;
+        
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+            margin-bottom: 0;
         }
-        .time-fields input {
-            flex: 1;
+        
+        .table th {
+            font-weight: 600;
+            color: var(--nissan-gray);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: none;
+            border-bottom: 2px solid #E5E5EA;
+            padding: 1rem 0.75rem;
         }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
+        
+        .table td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #E5E5EA;
         }
-        .hidden {
-            display: none;
+        
+        .table tbody tr:hover {
+            background-color: rgba(195, 0, 47, 0.04);
         }
+        
         .action-buttons {
             display: flex;
-            gap: 5px;
-            flex-wrap: nowrap;
+            gap: 6px;
+            flex-wrap: wrap;
         }
-        .table-btn {
-            padding: 4px 8px;
-            font-size: 11px;
-            border: 1px solid #ccc;
-            background: white;
-            cursor: pointer;
-            border-radius: 3px;
-            white-space: nowrap;
+        
+        .action-btn {
+            font-size: 0.8125rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
         }
-        .table-btn:hover {
-            background: #f5f5f5;
+        
+        .action-btn.report {
+            background-color: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+            border: 1px solid rgba(0, 122, 255, 0.2);
         }
-        .report-btn {
-            border-color: #007bff;
-            color: #007bff;
+        
+        .action-btn.event {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            border: 1px solid rgba(52, 199, 89, 0.2);
         }
-        .event-btn {
-            border-color: #28a745;
-            color: #28a745;
+        
+        .message {
+            display: none;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9375rem;
         }
-        .action-cell {
-            white-space: nowrap;
+        
+        .message.success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #1D7E36;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #D70015;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--nissan-dark);
+        }
+        
+        .logout-btn {
+            color: var(--nissan-red);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(195, 0, 47, 0.1);
+            color: #A80028;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--nissan-dark);
+            font-size: 1.25rem;
+        }
+        
+        .time-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .time-fields {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span>Пользователь: <strong>{{ username }}</strong></span>
-        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
-    </div>
-
-    <div class="dialog">
-        <input type="hidden" id="recordId">
-        <input type="text" id="partName" placeholder="part_name">
-        <input type="number" id="plannedQuantity" placeholder="planned_quantity" min="1">
-        <input type="number" id="machineNumber" placeholder="machine_number" min="1">
-        
-        <div class="time-fields">
-            <input type="datetime-local" id="startTime" placeholder="start_time">
-            <input type="datetime-local" id="endTime" placeholder="end_time">
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg" alt="Nissan Logo">
+                <span style="font-weight: 600; color: var(--nissan-dark);">Производственная система</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-info">
+                    <span><strong>{{ username }}</strong></span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+                </div>
+            </div>
         </div>
-        
-        <div class="button-group">
-            <!-- Primary action button -->
-            <button onclick="saveData()" class="btn btn-primary">Создать батч</button>
-            <!-- Secondary action button -->
-            <button onclick="newRecord()" class="btn btn-secondary">Новая запись</button>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="container-fluid py-4">
+        <div class="row">
+            <!-- Форма создания/редактирования батча -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Создание производственного батча</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="recordId">
+                        
+                        <div class="mb-3">
+                            <label for="partName" class="form-label">Название детали</label>
+                            <input type="text" class="form-control" id="partName" placeholder="Введите название детали">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="plannedQuantity" class="form-label">Планируемое количество</label>
+                                <input type="number" class="form-control" id="plannedQuantity" min="1" placeholder="шт">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="machineNumber" class="form-label">Номер станка</label>
+                                <input type="number" class="form-control" id="machineNumber" min="1" placeholder="№">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Временные интервалы</label>
+                            <div class="time-fields">
+                                <div>
+                                    <label for="startTime" class="form-label small">Начало</label>
+                                    <input type="datetime-local" class="form-control" id="startTime">
+                                </div>
+                                <div>
+                                    <label for="endTime" class="form-label small">Окончание</label>
+                                    <input type="datetime-local" class="form-control" id="endTime">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button onclick="saveData()" class="btn btn-primary" id="saveBtn">Создать батч</button>
+                            <button onclick="newRecord()" class="btn btn-secondary">Новая запись</button>
+                            <button onclick="deleteRecord()" class="btn btn-danger d-none" id="deleteBtn">Удалить батч</button>
+                        </div>
+                        
+                        <div id="message" class="message"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Список батчей -->
+            <div class="col-lg-8">
+                <h4 class="section-title">Производственные батчи</h4>
+                
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="recordsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Название детали</th>
+                                    <th>Количество</th>
+                                    <th>Станок</th>
+                                    <th>Начало</th>
+                                    <th>Окончание</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsBody">
+                                <!-- Данные будут загружены через JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button onclick="deleteRecord()" class="btn btn-danger hidden" id="deleteBtn">Удалить</button>
-        <div id="message" class="message"></div>
-    </div>
+    </main>
 
-    <div id="recordsContainer" style="max-width: 1000px; margin: 0 auto;">
-        <h3>Производственные батчи:</h3>
-        <table class="records-table" id="recordsTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Part Name</th>
-                    <th>Planned Qty</th>
-                    <th>Machine</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody id="recordsBody">
-                <!-- Данные будут загружены через JavaScript -->
-            </tbody>
-        </table>
-    </div>
-
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
+        // Оригинальный JavaScript код остается без изменений
         let selectedRow = null;
         let currentRecordId = null;
         
@@ -210,7 +351,8 @@
             document.getElementById('startTime').value = record.start_time.replace(' ', 'T');
             document.getElementById('endTime').value = record.end_time.replace(' ', 'T');
             
-            document.getElementById('deleteBtn').classList.remove('hidden');
+            document.getElementById('saveBtn').textContent = 'Обновить батч';
+            document.getElementById('deleteBtn').classList.remove('d-none');
             
             currentRecordId = record.id;
         }
@@ -222,10 +364,11 @@
             document.getElementById('machineNumber').value = '';
             setDefaultTimes();
             
-            document.getElementById('deleteBtn').classList.add('hidden');
+            document.getElementById('saveBtn').textContent = 'Создать батч';
+            document.getElementById('deleteBtn').classList.add('d-none');
             
             if (selectedRow) {
-                selectedRow.classList.remove('selected');
+                selectedRow.classList.remove('table-active');
                 selectedRow = null;
             }
             
@@ -250,49 +393,49 @@
             const messageDiv = document.getElementById('message');
             
             if (!partName) {
-                showMessage('Введите part_name', 'error');
+                showMessage('Введите название детали', 'error');
                 partNameInput.focus();
                 return;
             }
             
             if (!plannedQuantity) {
-                showMessage('Введите planned_quantity', 'error');
+                showMessage('Введите планируемое количество', 'error');
                 quantityInput.focus();
                 return;
             }
             
             if (!machineNumber) {
-                showMessage('Введите machine_number', 'error');
+                showMessage('Введите номер станка', 'error');
                 machineInput.focus();
                 return;
             }
             
             if (!startTime) {
-                showMessage('Введите start_time', 'error');
+                showMessage('Введите время начала', 'error');
                 startTimeInput.focus();
                 return;
             }
             
             if (!endTime) {
-                showMessage('Введите end_time', 'error');
+                showMessage('Введите время окончания', 'error');
                 endTimeInput.focus();
                 return;
             }
             
             if (parseInt(plannedQuantity) <= 0) {
-                showMessage('Planned quantity должен быть положительным числом', 'error');
+                showMessage('Количество должно быть положительным числом', 'error');
                 quantityInput.focus();
                 return;
             }
             
             if (parseInt(machineNumber) <= 0) {
-                showMessage('Machine number должен быть положительным числом', 'error');
+                showMessage('Номер станка должен быть положительным числом', 'error');
                 machineInput.focus();
                 return;
             }
             
             if (new Date(endTime) <= new Date(startTime)) {
-                showMessage('End time должен быть позже start time', 'error');
+                showMessage('Время окончания должно быть позже времени начала', 'error');
                 endTimeInput.focus();
                 return;
             }
@@ -348,7 +491,7 @@
                 return;
             }
             
-            if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+            if (!confirm('Вы уверены, что хотите удалить этот батч?')) {
                 return;
             }
             
@@ -405,9 +548,8 @@
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
                 cell.colSpan = 7;
-                cell.textContent = 'Нет записей';
-                cell.style.textAlign = 'center';
-                cell.style.color = '#999';
+                cell.textContent = 'Нет производственных батчей';
+                cell.className = 'text-center text-muted py-4';
                 row.appendChild(cell);
                 tbody.appendChild(row);
                 return;
@@ -415,19 +557,20 @@
             
             records.forEach(record => {
                 const row = document.createElement('tr');
-                
                 row.style.cursor = 'pointer';
-                row.title = 'Нажмите для редактирования';
+                
                 row.addEventListener('click', function() {
                     window.open('/edit/' + record.id, '_blank');
                 });
                 
                 const idCell = document.createElement('td');
                 idCell.textContent = record.id;
+                idCell.className = 'fw-medium';
                 row.appendChild(idCell);
                 
                 const nameCell = document.createElement('td');
                 nameCell.textContent = record.part_name;
+                nameCell.className = 'fw-medium';
                 row.appendChild(nameCell);
                 
                 const quantityCell = document.createElement('td');
@@ -453,16 +596,16 @@
                 buttonContainer.className = 'action-buttons';
                 
                 const reportButton = document.createElement('button');
-                reportButton.className = 'table-btn report-btn';
-                reportButton.textContent = 'Отчет по производству';
+                reportButton.className = 'action-btn report';
+                reportButton.textContent = 'Отчет';
                 reportButton.onclick = function(e) {
                     e.stopPropagation();
                     window.open('/production_report/' + record.id, '_blank');
                 };
                 
                 const eventButton = document.createElement('button');
-                eventButton.className = 'table-btn event-btn';
-                eventButton.textContent = 'Внести событие';
+                eventButton.className = 'action-btn event';
+                eventButton.textContent = 'События';
                 eventButton.onclick = function(e) {
                     e.stopPropagation();
                     window.open('/events/' + record.id, '_blank');
@@ -478,7 +621,7 @@
             });
         }
         
-        const inputs = document.querySelectorAll('.dialog input');
+        const inputs = document.querySelectorAll('#partName, #plannedQuantity, #machineNumber, #startTime, #endTime');
         inputs.forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {

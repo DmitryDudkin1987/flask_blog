@@ -1,244 +1,343 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Отчет по производству - Заказ #{{ order.id }}</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Отчет по производству | Система управления производством Nissan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --nissan-red: #C3002F;
+            --nissan-dark: #1D1D1F;
+            --nissan-light: #F5F5F7;
+            --nissan-gray: #86868B;
+        }
+        
         body {
-            margin: 20px;
-            background: white;
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--nissan-light);
+            color: var(--nissan-dark);
+            min-height: 100vh;
         }
-        .header {
-            text-align: right;
-            margin-bottom: 30px;
+        
+        .navbar-brand img {
+            height: 32px;
+            margin-right: 12px;
         }
-        .logout {
-            background: #d00;
-            color: white;
+        
+        .card {
             border: none;
-            padding: 8px 15px;
-            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #D1D1D6;
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--nissan-red);
+            box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--nissan-red);
+            border-color: var(--nissan-red);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--nissan-dark);
+            border: 1px solid #D1D1D6;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #F5F5F7;
+            border-color: #8E8E93;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--nissan-dark);
+        }
+        
+        .logout-btn {
+            color: var(--nissan-red);
             text-decoration: none;
-            display: inline-block;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
-        .dialog {
-            max-width: 600px;
-            margin: 30px auto;
-            padding: 30px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        
+        .logout-btn:hover {
+            background-color: rgba(195, 0, 47, 0.1);
+            color: #A80028;
         }
-        .dialog h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
+        
+        .back-btn {
+            color: var(--nissan-gray);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s ease;
         }
-        .dialog h3 {
-            color: #666;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+        
+        .back-btn:hover {
+            color: var(--nissan-dark);
         }
-        .dialog input[type="text"],
-        .dialog input[type="number"],
-        .dialog input[type="datetime-local"] {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .dialog input[type="text"]:focus,
-        .dialog input[type="number"]:focus,
-        .dialog input[type="datetime-local"]:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0,123,255,0.3);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-        .button-group button {
-            flex: 1;
-            padding: 12px;
+        
+        .order-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
         }
-        .save-btn {
-            background: #28a745;
-            color: white;
+        
+        .order-info-card .card-body {
+            padding: 1.5rem;
         }
-        .save-btn:hover {
-            background: #218838;
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
         }
-        .cancel-btn {
-            background: #6c757d;
-            color: white;
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
         }
-        .cancel-btn:hover {
-            background: #5a6268;
+        
+        .info-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
         }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-            border-radius: 4px;
+        
+        .info-value {
+            font-weight: 600;
+            font-size: 1.125rem;
         }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .order-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 25px;
-            border-left: 4px solid #007bff;
-        }
-        .order-info h4 {
-            margin-top: 0;
-            color: #007bff;
-        }
-        .order-info p {
-            margin: 5px 0;
-        }
+        
         .defects-section {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            border-left: 4px solid #ffc107;
+            background-color: rgba(255, 204, 0, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255, 204, 0, 0.2);
         }
-        .defects-section h4 {
-            margin-top: 0;
-            color: #856404;
+        
+        .defects-title {
+            color: #BF7A00;
+            font-weight: 600;
+            margin-bottom: 1rem;
         }
+        
+        .defects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
         .total-defects {
-            background: #d1ecf1;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
+            background-color: rgba(0, 122, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
             text-align: center;
+            margin-top: 1rem;
         }
-        .total-defects strong {
-            color: #0c5460;
+        
+        .total-defects-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007AFF;
+        }
+        
+        .message {
+            display: none;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        .message.success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #1D7E36;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #D70015;
+            border: 1px solid rgba(255, 59, 48, 0.2);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span>Пользователь: <strong>{{ username }}</strong></span>
-        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
-    </div>
-
-    <div class="dialog">
-        <h2>Отчет по производству</h2>
-        
-        <div class="order-info">
-            <h4>Информация о заказе:</h4>
-            <p><strong>ID заказа:</strong> {{ order.id }}</p>
-            <p><strong>Планируемое количество:</strong> {{ order.planned_quantity }}</p>
-            <p><strong>Станок №:</strong> {{ order.machine_number }}</p>
-            <p><strong>Плановое время начала:</strong> {{ order.start_time }}</p>
-            <p><strong>Плановое время окончания:</strong> {{ order.end_time }}</p>
-        </div>
-
-        <h3>Фактические данные производства</h3>
-        
-        <input type="hidden" id="orderId" value="{{ order.id }}">
-        
-        <div class="form-group">
-            <label for="partNumber">Наименование детали (part_number):</label>
-            <input type="text" id="partNumber" placeholder="Введите наименование детали" 
-                   value="{{ report.part_number if report else '' }}">
-        </div>
-        
-        <div class="form-group">
-            <label for="actualQuantity">Фактическое количество:</label>
-            <input type="number" id="actualQuantity" placeholder="Введите фактическое количество" 
-                   min="0" value="{{ report.actual_quantity if report else '' }}">
-        </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="actualStartTime">Фактическое время начала:</label>
-                <input type="datetime-local" id="actualStartTime" 
-                       value="{{ report.actual_start_time if report else '' }}">
-            </div>
-            <div class="form-group">
-                <label for="actualEndTime">Фактическое время окончания:</label>
-                <input type="datetime-local" id="actualEndTime" 
-                       value="{{ report.actual_end_time if report else '' }}">
-            </div>
-        </div>
-        
-        <div class="defects-section">
-            <h4>Дефекты производства:</h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="bubbleCount">Пузыри (bubble_count):</label>
-                    <input type="number" id="bubbleCount" placeholder="0" 
-                           min="0" value="{{ report.bubble_count if report else '0' }}">
-                </div>
-                <div class="form-group">
-                    <label for="underfillCount">Недолив (underfill_count):</label>
-                    <input type="number" id="underfillCount" placeholder="0" 
-                           min="0" value="{{ report.underfill_count if report else '0' }}">
-                </div>
-                <div class="form-group">
-                    <label for="inclusionCount">Включения (inclusion_count):</label>
-                    <input type="number" id="inclusionCount" placeholder="0" 
-                           min="0" value="{{ report.inclusion_count if report else '0' }}">
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg" alt="Nissan Logo">
+                <span style="font-weight: 600; color: var(--nissan-dark);">Производственная система</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-info">
+                    <span><strong>{{ username }}</strong></span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
                 </div>
             </div>
-            <div class="total-defects">
-                <strong>Общее количество дефектов: <span id="totalDefects">0</span></strong>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="container py-4">
+        <a href="/home" class="back-btn">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Назад к списку
+        </a>
+        
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Информация о заказе -->
+                <div class="card order-info-card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Заказ #{{ order.id }}</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Деталь</span>
+                                <span class="info-value">{{ order.part_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Планируемое количество</span>
+                                <span class="info-value">{{ order.planned_quantity }} шт</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Станок</span>
+                                <span class="info-value">№ {{ order.machine_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Форма отчета -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Отчет по производству</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="orderId" value="{{ order.id }}">
+                        
+                        <div class="mb-4">
+                            <h6 class="mb-3">Фактические данные производства</h6>
+                            
+                            <div class="mb-3">
+                                <label for="partNumber" class="form-label">Номер детали</label>
+                                <input type="text" class="form-control" id="partNumber" 
+                                       value="{{ report.part_number if report else '' }}"
+                                       placeholder="Введите номер детали">
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="actualQuantity" class="form-label">Фактическое количество</label>
+                                    <input type="number" class="form-control" id="actualQuantity" min="0"
+                                           value="{{ report.actual_quantity if report else '' }}"
+                                           placeholder="шт">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="actualStartTime" class="form-label">Время начала</label>
+                                    <input type="datetime-local" class="form-control" id="actualStartTime"
+                                           value="{{ report.actual_start_time if report else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="actualEndTime" class="form-label">Время окончания</label>
+                                <input type="datetime-local" class="form-control" id="actualEndTime"
+                                       value="{{ report.actual_end_time if report else '' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Дефекты -->
+                        <div class="defects-section">
+                            <h6 class="defects-title mb-3">Дефекты производства</h6>
+                            
+                            <div class="defects-grid">
+                                <div>
+                                    <label for="bubbleCount" class="form-label">Пузыри</label>
+                                    <input type="number" class="form-control" id="bubbleCount" min="0"
+                                           value="{{ report.bubble_count if report else '0' }}">
+                                </div>
+                                <div>
+                                    <label for="underfillCount" class="form-label">Недолив</label>
+                                    <input type="number" class="form-control" id="underfillCount" min="0"
+                                           value="{{ report.underfill_count if report else '0' }}">
+                                </div>
+                                <div>
+                                    <label for="inclusionCount" class="form-label">Включения</label>
+                                    <input type="number" class="form-control" id="inclusionCount" min="0"
+                                           value="{{ report.inclusion_count if report else '0' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="total-defects">
+                                <div class="small text-muted mb-1">Общее количество дефектов</div>
+                                <div class="total-defects-value" id="totalDefects">0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки действий -->
+                        <div class="d-flex gap-2 mt-4">
+                            <button onclick="saveProductionReport()" class="btn btn-primary flex-grow-1">
+                                {{ 'Обновить отчет' if report else 'Сохранить отчет' }}
+                            </button>
+                            <button onclick="goBack()" class="btn btn-secondary">Отмена</button>
+                        </div>
+                        
+                        <div id="message" class="message mt-3"></div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="button-group">
-            <button onclick="saveProductionReport()" class="save-btn">
-                {{ 'Обновить отчет' if report else 'Сохранить отчет' }}
-            </button>
-            <button onclick="goBack()" class="cancel-btn">Отмена</button>
-        </div>
-        
-        <div id="message" class="message"></div>
-    </div>
+    </main>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         // Устанавливаем время по умолчанию при загрузке страницы
         function setDefaultTimes() {
@@ -246,7 +345,6 @@
             const actualStartTimeInput = document.getElementById('actualStartTime');
             const actualEndTimeInput = document.getElementById('actualEndTime');
             
-            // Форматируем дату для input[type="datetime-local"]
             const formatDateTime = (date) => {
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -257,12 +355,10 @@
                 return `${year}-${month}-${day}T${hours}:${minutes}`;
             };
             
-            // Устанавливаем время начала на текущее время, если поле пустое
             if (!actualStartTimeInput.value) {
                 actualStartTimeInput.value = formatDateTime(now);
             }
             
-            // Устанавливаем время окончания на 1 час позже, если поле пустое
             if (!actualEndTimeInput.value) {
                 const endTime = new Date(now);
                 endTime.setHours(endTime.getHours() + 1);
@@ -326,7 +422,7 @@
             }
             
             if (new Date(actualEndTime) <= new Date(actualStartTime)) {
-                showMessage('Фактическое время окончания должно быть позже времени начала', 'error');
+                showMessage('Время окончания должно быть позже времени начала', 'error');
                 actualEndTimeInput.focus();
                 return;
             }
@@ -391,7 +487,7 @@
         }
         
         // Сохранение по нажатию Enter (при фокусе на любом поле)
-        const inputs = document.querySelectorAll('.dialog input');
+        const inputs = document.querySelectorAll('.form-control');
         inputs.forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
