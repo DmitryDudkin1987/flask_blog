@@ -1,187 +1,372 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Редактирование записи</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Редактирование записи | Система управления производством Nissan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --nissan-red: #C3002F;
+            --nissan-dark: #1D1D1F;
+            --nissan-light: #F5F5F7;
+            --nissan-gray: #86868B;
+        }
+        
         body {
-            margin: 20px;
-            background: white;
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--nissan-light);
+            color: var(--nissan-dark);
+            min-height: 100vh;
         }
-        .header {
-            text-align: right;
-            margin-bottom: 30px;
+        
+        .navbar-brand img {
+            height: 32px;
+            margin-right: 12px;
         }
-        .logout {
-            background: #d00;
-            color: white;
+        
+        .card {
             border: none;
-            padding: 8px 15px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
         }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #D1D1D6;
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--nissan-red);
+            box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--nissan-red);
+            border-color: var(--nissan-red);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #A80028;
+            border-color: #A80028;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--nissan-red);
+            color: var(--nissan-red);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--nissan-red);
+            color: white;
+            border-color: var(--nissan-red);
+        }
+        
+        .btn-outline-danger {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--nissan-dark);
+        }
+        
+        .logout-btn {
+            color: var(--nissan-red);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(195, 0, 47, 0.1);
+            color: #A80028;
+        }
+        
         .back-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            cursor: pointer;
+            color: var(--nissan-gray);
             text-decoration: none;
-            display: inline-block;
-            margin-right: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s ease;
         }
-        .dialog {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            border: 1px solid #ccc;
+        
+        .back-btn:hover {
+            color: var(--nissan-dark);
         }
-        .dialog input {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
+        
+        .record-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
         }
-        .dialog button {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            cursor: pointer;
-            margin-top: 10px;
-            font-size: 14px;
+        
+        .record-id {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
-        .dialog button:hover {
+        
+        .record-subtitle {
             opacity: 0.9;
+            font-size: 0.9375rem;
         }
-        .update-btn {
-            background: #28a745;
-            color: white;
-        }
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-        }
-        .message {
-            margin-top: 10px;
-            padding: 8px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        
         .time-fields {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
-        .time-fields input {
-            flex: 1;
-        }
-        .record-info {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #333;
-        }
-        .confirmation-dialog {
+        
+        .message {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9375rem;
         }
-        .confirmation-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            max-width: 400px;
-            width: 90%;
+        
+        .message.success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #1D7E36;
+            border: 1px solid rgba(52, 199, 89, 0.2);
         }
-        .confirmation-buttons {
+        
+        .message.error {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #D70015;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
+        
+        /* Стили для модального окна */
+        .modal-header {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+            color: var(--nissan-dark);
+        }
+        
+        .record-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .detail-item {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
         }
-        .confirmation-buttons button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
+        
+        .detail-item:last-child {
+            border-bottom: none;
         }
-        .confirm-delete-btn {
-            background: #dc3545;
-            color: white;
+        
+        .detail-label {
+            font-weight: 500;
+            color: var(--nissan-gray);
         }
-        .cancel-delete-btn {
-            background: #6c757d;
-            color: white;
+        
+        .detail-value {
+            font-weight: 600;
+            color: var(--nissan-dark);
+        }
+        
+        .warning-text {
+            color: #D70015;
+            font-weight: 500;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .time-fields {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <a href="{{ url_for('home') }}" class="back-btn">Назад</a>
-        <span>Пользователь: <strong>{{ username }}</strong></span>
-        <a href="{{ url_for('logout') }}" class="logout">Выйти</a>
-    </div>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home') }}">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_2020_logo.svg" alt="Nissan Logo">
+                <span style="font-weight: 600; color: var(--nissan-dark);">Производственная система</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <div class="user-info">
+                    <span><strong>{{ username }}</strong></span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="dialog">
-        <div class="record-info">
-            Редактирование записи ID: <strong>{{ data.id }}</strong>
+    <!-- Основной контент -->
+    <main class="container py-4">
+        <a href="{{ url_for('home') }}" class="back-btn">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+            </svg>
+            Назад к списку
+        </a>
+        
+        <!-- Заголовок записи -->
+        <div class="record-header">
+            <div class="record-id">Редактирование записи #{{ data.id }}</div>
+            <div class="record-subtitle">{{ data.part_name }} • Станок №{{ data.machine_number }}</div>
         </div>
         
-        <input type="text" id="partName" placeholder="part_name" value="{{ data.part_name }}">
-        <input type="number" id="plannedQuantity" placeholder="planned_quantity" min="1" value="{{ data.planned_quantity }}">
-        <input type="number" id="machineNumber" placeholder="machine_number" min="1" value="{{ data.machine_number }}">
-        
-        <div class="time-fields">
-            <input type="datetime-local" id="startTime" value="{{ data.start_time }}">
-            <input type="datetime-local" id="endTime" value="{{ data.end_time }}">
+        <!-- Форма редактирования -->
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Редактирование данных</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="partName" class="form-label">Название детали</label>
+                            <input type="text" class="form-control" id="partName" 
+                                   value="{{ data.part_name }}"
+                                   placeholder="Введите название детали">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="plannedQuantity" class="form-label">Планируемое количество</label>
+                                <input type="number" class="form-control" id="plannedQuantity" 
+                                       value="{{ data.planned_quantity }}"
+                                       min="1" placeholder="шт">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="machineNumber" class="form-label">Номер станка</label>
+                                <input type="number" class="form-control" id="machineNumber" 
+                                       value="{{ data.machine_number }}"
+                                       min="1" placeholder="№">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Временные интервалы</label>
+                            <div class="time-fields">
+                                <div>
+                                    <label for="startTime" class="form-label small">Начало</label>
+                                    <input type="datetime-local" class="form-control" id="startTime" 
+                                           value="{{ data.start_time }}">
+                                </div>
+                                <div>
+                                    <label for="endTime" class="form-label small">Окончание</label>
+                                    <input type="datetime-local" class="form-control" id="endTime" 
+                                           value="{{ data.end_time }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button onclick="updateData()" class="btn btn-primary">Обновить запись</button>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                Удалить запись
+                            </button>
+                        </div>
+                        
+                        <div id="message" class="message mt-3"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <button class="update-btn" onclick="updateData()">Обновить запись</button>
-        <button class="delete-btn" onclick="showDeleteConfirmation()">Удалить запись</button>
-        <div id="message" class="message"></div>
-    </div>
+    </main>
 
-    <!-- Модальное окно подтверждения удаления -->
-    <div id="confirmationDialog" class="confirmation-dialog">
-        <div class="confirmation-content">
-            <h3>Подтверждение удаления</h3>
-            <p>Вы уверены, что хотите удалить запись с ID: <strong>{{ data.id }}</strong>?</p>
-            <p><strong>Детали записи:</strong></p>
-            <ul>
-                <li>Название детали: {{ data.part_name }}</li>
-                <li>Количество: {{ data.planned_quantity }}</li>
-                <li>Номер станка: {{ data.machine_number }}</li>
-            </ul>
-            <p style="color: #dc3545; font-weight: bold;">Это действие нельзя отменить!</p>
-            <div class="confirmation-buttons">
-                <button class="confirm-delete-btn" onclick="deleteRecord()">Да, удалить</button>
-                <button class="cancel-delete-btn" onclick="hideDeleteConfirmation()">Отмена</button>
+    <!-- Модальное окно подтверждения удаления (Bootstrap Modal) -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы уверены, что хотите удалить запись <strong>#{{ data.id }}</strong>?</p>
+                    
+                    <div class="record-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Название детали:</span>
+                            <span class="detail-value">{{ data.part_name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Планируемое количество:</span>
+                            <span class="detail-value">{{ data.planned_quantity }} шт</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Номер станка:</span>
+                            <span class="detail-value">№ {{ data.machine_number }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Время начала:</span>
+                            <span class="detail-value">{{ data.start_time }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Время окончания:</span>
+                            <span class="detail-value">{{ data.end_time }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="warning-text">
+                        ⚠️ Это действие нельзя отменить!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteRecord()">Удалить запись</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         // Функция обновления данных
         function updateData() {
@@ -200,49 +385,49 @@
             
             // Валидация
             if (!partName) {
-                showMessage('Введите part_name', 'error');
+                showMessage('Введите название детали', 'error');
                 partNameInput.focus();
                 return;
             }
             
             if (!plannedQuantity) {
-                showMessage('Введите planned_quantity', 'error');
+                showMessage('Введите планируемое количество', 'error');
                 quantityInput.focus();
                 return;
             }
             
             if (!machineNumber) {
-                showMessage('Введите machine_number', 'error');
+                showMessage('Введите номер станка', 'error');
                 machineInput.focus();
                 return;
             }
             
             if (!startTime) {
-                showMessage('Введите start_time', 'error');
+                showMessage('Введите время начала', 'error');
                 startTimeInput.focus();
                 return;
             }
             
             if (!endTime) {
-                showMessage('Введите end_time', 'error');
+                showMessage('Введите время окончания', 'error');
                 endTimeInput.focus();
                 return;
             }
             
             if (parseInt(plannedQuantity) <= 0) {
-                showMessage('Planned quantity должен быть положительным числом', 'error');
+                showMessage('Количество должно быть положительным числом', 'error');
                 quantityInput.focus();
                 return;
             }
             
             if (parseInt(machineNumber) <= 0) {
-                showMessage('Machine number должен быть положительным числом', 'error');
+                showMessage('Номер станка должен быть положительным числом', 'error');
                 machineInput.focus();
                 return;
             }
             
             if (new Date(endTime) <= new Date(startTime)) {
-                showMessage('End time должен быть позже start time', 'error');
+                showMessage('Время окончания должно быть позже времени начала', 'error');
                 endTimeInput.focus();
                 return;
             }
@@ -281,6 +466,10 @@
         
         // Функция удаления записи
         function deleteRecord() {
+            // Закрываем модальное окно
+            const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            deleteModal.hide();
+            
             fetch('/delete_data/{{ data.id }}', {
                 method: 'DELETE',
                 headers: {
@@ -291,31 +480,18 @@
             .then(data => {
                 if (data.success) {
                     showMessage(data.message, 'success');
-                    // Скрываем диалог подтверждения
-                    hideDeleteConfirmation();
                     // Через 2 секунды возвращаемся на главную страницу
                     setTimeout(() => {
                         window.location.href = "{{ url_for('home') }}";
                     }, 2000);
                 } else {
                     showMessage('Ошибка: ' + data.error, 'error');
-                    hideDeleteConfirmation();
                 }
             })
             .catch(error => {
                 showMessage('Ошибка соединения: ' + error, 'error');
                 console.error('Error:', error);
-                hideDeleteConfirmation();
             });
-        }
-        
-        // Функции для работы с модальным окном
-        function showDeleteConfirmation() {
-            document.getElementById('confirmationDialog').style.display = 'block';
-        }
-        
-        function hideDeleteConfirmation() {
-            document.getElementById('confirmationDialog').style.display = 'none';
         }
         
         // Функция отображения сообщений
@@ -334,7 +510,7 @@
         }
         
         // Сохранение по нажатию Enter
-        const inputs = document.querySelectorAll('.dialog input');
+        const inputs = document.querySelectorAll('#partName, #plannedQuantity, #machineNumber, #startTime, #endTime');
         inputs.forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -343,16 +519,20 @@
             });
         });
         
-        // Закрытие модального окна при клике вне его
-        document.getElementById('confirmationDialog').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hideDeleteConfirmation();
-            }
-        });
-        
         // Устанавливаем фокус на первое поле при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('partName').focus();
+            
+            // Форматируем время для полей datetime-local
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            if (startTimeInput.value) {
+                startTimeInput.value = startTimeInput.value.replace(' ', 'T');
+            }
+            if (endTimeInput.value) {
+                endTimeInput.value = endTimeInput.value.replace(' ', 'T');
+            }
         });
     </script>
 </body>
