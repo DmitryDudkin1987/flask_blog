@@ -266,11 +266,15 @@
                         <h5 class="mb-0">Редактирование данных</h5>
                     </div>
                     <div class="card-body">
+
+                        
                         <div class="mb-3">
                             <label for="partName" class="form-label">Название детали</label>
-                            <input type="text" class="form-control" id="partName" 
-                                   value="{{ data.part_name }}"
-                                   placeholder="Введите название детали">
+                            <select class="form-select" id="partName">
+                                <option value="Деталь 1" {{ 'selected' if data.part_name == 'Деталь 1' else '' }}>Деталь 1</option>
+                                <option value="Деталь 2" {{ 'selected' if data.part_name == 'Деталь 2' else '' }}>Деталь 2</option>
+                                <option value="Деталь 3" {{ 'selected' if data.part_name == 'Деталь 3' else '' }}>Деталь 3</option>
+                            </select>
                         </div>
                         
                         <div class="row mb-3">

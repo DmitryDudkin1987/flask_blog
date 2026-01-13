@@ -266,9 +266,12 @@
                             
                             <div class="mb-3">
                                 <label for="partNumber" class="form-label">Номер детали</label>
-                                <input type="text" class="form-control" id="partNumber" 
-                                       value="{{ report.part_number if report else '' }}"
-                                       placeholder="Введите номер детали">
+                                <select class="form-select" id="partNumber">
+                                    <option value="" {{ 'selected' if not report or not report.part_number else '' }}>Выберите деталь</option>
+                                    <option value="Деталь 1" {{ 'selected' if report and report.part_number == 'Деталь 1' else '' }}>Деталь 1</option>
+                                    <option value="Деталь 2" {{ 'selected' if report and report.part_number == 'Деталь 2' else '' }}>Деталь 2</option>
+                                    <option value="Деталь 3" {{ 'selected' if report and report.part_number == 'Деталь 3' else '' }}>Деталь 3</option>
+                                </select>
                             </div>
                             
                             <div class="row mb-3">
@@ -456,7 +459,7 @@
                     showMessage(data.message, 'success');
                     // Через 2 секунды возвращаемся назад
                     setTimeout(() => {
-                        window.close();
+                        window.location.href = '/home';
                     }, 2000);
                 } else {
                     showMessage('Ошибка: ' + data.error, 'error');
@@ -483,7 +486,7 @@
         
         // Функция возврата назад
         function goBack() {
-            window.close();
+            window.location.href ='/home';
         }
         
         // Сохранение по нажатию Enter (при фокусе на любом поле)

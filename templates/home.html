@@ -241,7 +241,12 @@
                         
                         <div class="mb-3">
                             <label for="partName" class="form-label">Название детали</label>
-                            <input type="text" class="form-control" id="partName" placeholder="Введите название детали">
+                            <select class="form-select" id="partName">
+                                <option value="" selected disabled>Выберите деталь</option>
+                                <option value="Деталь 1">Деталь 1</option>
+                                <option value="Деталь 2">Деталь 2</option>
+                                <option value="Деталь 3">Деталь 3</option>
+                            </select>
                         </div>
                         
                         <div class="row mb-3">
@@ -560,7 +565,7 @@
                 row.style.cursor = 'pointer';
                 
                 row.addEventListener('click', function() {
-                    window.open('/edit/' + record.id, '_blank');
+                    window.location.href='/edit/' + record.id, '_blank';
                 });
                 
                 const idCell = document.createElement('td');
@@ -600,7 +605,7 @@
                 reportButton.textContent = 'Отчет';
                 reportButton.onclick = function(e) {
                     e.stopPropagation();
-                    window.open('/production_report/' + record.id, '_blank');
+                    window.location.href = '/production_report/' + record.id, '_blank';
                 };
                 
                 const eventButton = document.createElement('button');
@@ -608,7 +613,7 @@
                 eventButton.textContent = 'События';
                 eventButton.onclick = function(e) {
                     e.stopPropagation();
-                    window.open('/events/' + record.id, '_blank');
+                    window.location.href = '/events/' + record.id, '_blank';
                 };
                 
                 buttonContainer.appendChild(reportButton);
