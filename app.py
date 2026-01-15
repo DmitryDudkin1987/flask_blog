@@ -703,8 +703,19 @@ def delete_data(id):
             if not cursor.fetchone():
                 return jsonify({'success': False, 'error': 'Запись не найдена'}), 404
             
-            delete_query = "DELETE FROM production_plan WHERE id = %s RETURNING id;"
-            cursor.execute(delete_query, (id,))
+           # УДАЛЕНИЕ связанных событий из таблицы events
+            delete_events_query = "DELETE FROM events WHERE batch = %s RETURNING event_id;"
+            cursor.execute(delete_events_query, (id,))
+            deleted_events = cursor.fetchall()
+            
+            # УДАЛЕНИЕ связанных отчетов из таблицы production
+            delete_production_query = "DELETE FROM production WHERE order_id = %s RETURNING id;"
+            cursor.execute(delete_production_query, (id,))
+            deleted_reports = cursor.fetchall()
+            
+            # УДАЛЕНИЕ из таблицы production_plan
+            delete_plan_query = "DELETE FROM production_plan WHERE id = %s RETURNING id;"
+            cursor.execute(delete_plan_query, (id,))
             conn.commit()
             
             deleted_id = cursor.fetchone()[0]
