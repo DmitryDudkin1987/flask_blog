@@ -668,10 +668,11 @@ def update_data(id):
         log_message(f"ERROR: Ошибка обработки запроса: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/get_data', methods=['GET'])
 @login_required
 def get_data():
-    """Получение списка сохраненных данных - только 10 последних записей"""
+    """Получение списка сохраненных данных - только 10 последних записей с информацией о наличии отчета и событий"""
     try:
         conn = get_db_connection()
         if conn is None:
@@ -681,11 +682,29 @@ def get_data():
         try:
             cursor = conn.cursor()
             
+            # Измененный запрос с LEFT JOIN для проверки наличия отчета и события с Utilization hours
             select_query = """
-            SELECT id, part_name, planned_quantity, machine_number, 
-                   start_time, end_time 
-            FROM production_plan 
-            ORDER BY id DESC
+            SELECT 
+                pp.id, 
+                pp.part_name, 
+                pp.planned_quantity, 
+                pp.machine_number, 
+                pp.start_time, 
+                pp.end_time,
+                CASE 
+                    WHEN p.id IS NOT NULL THEN true 
+                    ELSE false 
+                END as has_report,
+                CASE 
+                    WHEN e.event_id IS NOT NULL AND e."Time_group" = 'Utilization hours' THEN true 
+                    ELSE false 
+                END as has_utilization_event
+            FROM production_plan pp
+            LEFT JOIN production p ON pp.id = p.order_id
+            LEFT JOIN events e ON pp.id = e.batch AND e."Time_group" = 'Utilization hours'
+            GROUP BY pp.id, pp.part_name, pp.planned_quantity, pp.machine_number, 
+                     pp.start_time, pp.end_time, p.id, e.event_id, e."Time_group"
+            ORDER BY pp.id DESC
             LIMIT 10;
             """
             
@@ -700,7 +719,9 @@ def get_data():
                     'planned_quantity': record[2],
                     'machine_number': record[3],
                     'start_time': record[4].strftime('%Y-%m-%d %H:%M'),
-                    'end_time': record[5].strftime('%Y-%m-%d %H:%M')
+                    'end_time': record[5].strftime('%Y-%m-%d %H:%M'),
+                    'has_report': record[6],  # True если отчет есть, False если нет
+                    'has_utilization_event': record[7]  # True если есть событие с Utilization hours
                 })
             
             return jsonify({
