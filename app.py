@@ -99,6 +99,42 @@ def init_database():
         if conn:
             conn.close()
 
+def get_parts_list():
+    """Получение списка деталей из таблицы parts"""
+    conn = get_db_connection()
+    if conn is None:
+        return []
+    
+    cursor = None
+    try:
+        cursor = conn.cursor()
+        
+        select_query = """
+        SELECT "Наименование детали" 
+        FROM parts 
+        ORDER BY "Наименование детали";
+        """
+        
+        cursor.execute(select_query)
+        parts = cursor.fetchall()
+        
+        # Преобразуем список кортежей в список строк
+        parts_list = [part[0] for part in parts]
+        
+        log_message(f"INFO: Получено {len(parts_list)} деталей из БД")
+        return parts_list
+        
+    except (Exception, Error) as error:
+        log_message(f"ERROR: Ошибка при получении списка деталей: {error}")
+        return []
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 def check_auth(username, password):
     """Проверка логина и пароля"""
     return username == 'admin' and password == '1234'
@@ -140,12 +176,14 @@ def login():
 @login_required
 def home():
     """Главная страница после авторизации"""
-    return render_template('home.html', username=session.get('username'))
+    parts_list = get_parts_list()
+    return render_template('home.html', username=session.get('username'), parts_list=parts_list)
 
 @app.route('/edit/<int:id>')
 @login_required
 def edit_record(id):
     """Страница редактирования записи"""
+    parts_list = get_parts_list()
     conn = get_db_connection()
     if conn is None:
         return "Ошибка подключения к базе данных", 500
@@ -176,7 +214,7 @@ def edit_record(id):
             'end_time': record[5].strftime('%Y-%m-%dT%H:%M')
         }
         
-        return render_template('edit.html', data=data, username=session.get('username'))
+        return render_template('edit.html', data=data, username=session.get('username'), parts_list=parts_list)
         
     except (Exception, Error) as error:
         log_message(f"ERROR: Ошибка при получении записи: {error}")

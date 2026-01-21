@@ -267,15 +267,18 @@
                     </div>
                     <div class="card-body">
 
-                        
                         <div class="mb-3">
                             <label for="partName" class="form-label">Название детали</label>
                             <select class="form-select" id="partName">
-                                <option value="Деталь 1" {{ 'selected' if data.part_name == 'Деталь 1' else '' }}>Деталь 1</option>
-                                <option value="Деталь 2" {{ 'selected' if data.part_name == 'Деталь 2' else '' }}>Деталь 2</option>
-                                <option value="Деталь 3" {{ 'selected' if data.part_name == 'Деталь 3' else '' }}>Деталь 3</option>
+                                <option value="" disabled>Выберите деталь</option>
+                                {% if parts_list %}
+                                    {% for part in parts_list %}
+                                        <option value="{{ part }}" {% if data.part_name == part %}selected{% endif %}>{{ part }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
+
                         
                         <div class="row mb-3">
                             <div class="col-md-6">

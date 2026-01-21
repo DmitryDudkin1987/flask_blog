@@ -215,17 +215,30 @@
             border: 1px solid rgba(255, 59, 48, 0.2);
         }
         
+
         .time-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        
-        @media (max-width: 768px) {
-            .time-inputs {
-                grid-template-columns: 1fr;
-            }
-        }
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.time-inputs > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Важно для предотвращения переполнения */
+}
+
+.time-inputs input {
+    width: 100%; /* Поля ввода занимают всю доступную ширину */
+    box-sizing: border-box; /* Учитывает padding и border в ширине */
+}
+
+@media (max-width: 768px) {
+    .time-inputs {
+        grid-template-columns: 1fr;
+    }
+}
+
     </style>
 </head>
 <body>
