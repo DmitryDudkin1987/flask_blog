@@ -334,6 +334,34 @@
             background-color: rgba(255, 149, 0, 0.15);
             border: 1px solid #FF9500;
         }
+
+        /* Добавить в CSS секцию */
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.record-count-badge {
+    background-color: var(--nissan-red);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+
+.filter-active {
+    border: 2px solid var(--nissan-red);
+    background-color: rgba(195, 0, 47, 0.05);
+}
+
+.record-count {
+    font-weight: 600;
+    color: var(--nissan-red);
+}
         
         @media (max-width: 768px) {
             .time-fields {
@@ -433,6 +461,36 @@
             <!-- Список батчей -->
             <div class="col-lg-8">
                 <h4 class="section-title">Производственные батчи</h4>
+
+<!-- Добавить этот блок после <h4 class="section-title">Производственные батчи</h4> -->
+<div class="card mb-3">
+    <div class="card-body">
+        <h6 class="mb-3">Фильтр по датам</h6>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="filterStartDate" class="form-label small">Начало периода</label>
+                <input type="date" class="form-control" id="filterStartDate">
+            </div>
+            <div class="col-md-3">
+                <label for="filterEndDate" class="form-label small">Конец периода</label>
+                <input type="date" class="form-control" id="filterEndDate">
+            </div>
+            <div class="col-md-6 d-flex align-items-end gap-2">
+                <button onclick="applyFilter()" class="btn btn-primary">
+                    Применить фильтр
+                </button>
+                <button onclick="resetFilter()" class="btn btn-secondary">
+                    Сбросить фильтр
+                </button>
+            </div>
+        </div>
+        <div class="mt-2 d-flex justify-content-between align-items-center">
+            <small class="text-muted" id="filterStatus">Показаны последние 10 записей</small>
+            <span class="badge bg-light text-dark" id="recordCount">0 записей</span>
+        </div>
+    </div>
+</div>
+
                 
                 <div class="card">
                     <div class="card-header bg-white">
@@ -704,6 +762,173 @@
                     console.error('Error:', error);
                 });
         }
+
+// Добавить эти функции в JavaScript секцию
+
+let currentFilter = {
+    startDate: null,
+    endDate: null,
+    isActive: false
+};
+
+function applyFilter() {
+    const startDate = document.getElementById('filterStartDate').value;
+    const endDate = document.getElementById('filterEndDate').value;
+    
+    // Валидация дат
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        showMessage('Дата начала не может быть позже даты окончания', 'error');
+        return;
+    }
+    
+    currentFilter.startDate = startDate;
+    currentFilter.endDate = endDate;
+    currentFilter.isActive = !!(startDate || endDate);
+    
+    // Обновляем статус фильтра
+    updateFilterStatus();
+    
+    // Загружаем данные с фильтром
+    loadFilteredData();
+}
+
+function resetFilter() {
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    
+    currentFilter.startDate = null;
+    currentFilter.endDate = null;
+    currentFilter.isActive = false;
+    
+    updateFilterStatus();
+    loadData(); // Возвращаемся к обычной загрузке
+}
+
+function loadFilteredData() {
+    let url = '/get_filtered_data';
+    const params = [];
+    
+    if (currentFilter.startDate) {
+        params.push(`start_date=${currentFilter.startDate}`);
+    }
+    
+    if (currentFilter.endDate) {
+        params.push(`end_date=${currentFilter.endDate}`);
+    }
+    
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateRecordsTable(data.data);
+                updateRecordCount(data.count);
+            } else {
+                console.error('Error loading filtered data:', data.error);
+                showMessage('Ошибка загрузки данных: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Ошибка соединения: ' + error, 'error');
+        });
+}
+
+function updateFilterStatus() {
+    const filterSection = document.querySelector('.filter-section');
+    const filterStatus = document.getElementById('filterStatus');
+    const recordCountBadge = document.getElementById('recordCount');
+    
+    if (currentFilter.isActive) {
+        if (filterSection) filterSection.classList.add('filter-active');
+        
+        let statusText = 'Фильтр активен: ';
+        if (currentFilter.startDate && currentFilter.endDate) {
+            statusText += `с ${formatDateDisplay(currentFilter.startDate)} по ${formatDateDisplay(currentFilter.endDate)}`;
+        } else if (currentFilter.startDate) {
+            statusText += `с ${formatDateDisplay(currentFilter.startDate)}`;
+        } else if (currentFilter.endDate) {
+            statusText += `по ${formatDateDisplay(currentFilter.endDate)}`;
+        }
+        
+        filterStatus.textContent = statusText;
+        recordCountBadge.classList.add('record-count-badge');
+    } else {
+        if (filterSection) filterSection.classList.remove('filter-active');
+        filterStatus.textContent = 'Показаны последние 10 записей';
+        recordCountBadge.classList.remove('record-count-badge');
+    }
+}
+
+function formatDateDisplay(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function updateRecordCount(count) {
+    const recordCountElement = document.getElementById('recordCount');
+    if (recordCountElement) {
+        recordCountElement.textContent = `${count} записей`;
+        
+        if (count === 0) {
+            recordCountElement.style.backgroundColor = '#dc3545';
+        } else if (count > 50) {
+            recordCountElement.style.backgroundColor = '#ffc107';
+            recordCountElement.style.color = '#000';
+        } else {
+            recordCountElement.style.backgroundColor = '#28a745';
+        }
+    }
+}
+
+// Обновляем функцию loadData для учета фильтра
+function loadData() {
+    if (currentFilter.isActive) {
+        loadFilteredData();
+    } else {
+        fetch('/get_data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateRecordsTable(data.data);
+                    updateRecordCount(data.count);
+                    updateFilterStatus();
+                } else {
+                    console.error('Error loading data:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+}
+
+
+// Обновляем обработчик DOMContentLoaded для установки сегодняшней даты по умолчанию
+document.addEventListener('DOMContentLoaded', function() {
+    clearFormForNewRecord();
+    loadData();
+    
+    // Устанавливаем сегодняшнюю дату в поле "конец периода"
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('filterEndDate').value = today;
+    
+    // Устанавливаем дату 7 дней назад в поле "начало периода"
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0];
+    document.getElementById('filterStartDate').value = weekAgoStr;
+    
+    // Применяем фильтр по умолчанию
+    applyFilter();
+});
 
         function updateRecordsTable(records) {
             const tbody = document.getElementById('recordsBody');

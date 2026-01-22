@@ -668,6 +668,106 @@ def update_data(id):
         log_message(f"ERROR: Ошибка обработки запроса: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/get_filtered_data', methods=['GET'])
+@login_required
+def get_filtered_data():
+    """Получение отфильтрованных данных по диапазону дат"""
+    try:
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({'success': False, 'error': 'Ошибка подключения к базе данных'}), 500
+        
+        cursor = None
+        try:
+            cursor = conn.cursor()
+            
+            # Базовый запрос
+            base_query = """
+            SELECT 
+                pp.id, 
+                pp.part_name, 
+                pp.planned_quantity, 
+                pp.machine_number, 
+                pp.start_time, 
+                pp.end_time,
+                CASE 
+                    WHEN p.id IS NOT NULL THEN true 
+                    ELSE false 
+                END as has_report,
+                CASE 
+                    WHEN e.event_id IS NOT NULL AND e."Time_group" = 'Utilization hours' THEN true 
+                    ELSE false 
+                END as has_utilization_event
+            FROM production_plan pp
+            LEFT JOIN production p ON pp.id = p.order_id
+            LEFT JOIN events e ON pp.id = e.batch AND e."Time_group" = 'Utilization hours'
+            """
+            
+            where_conditions = []
+            params = []
+            
+            # Добавляем условия фильтрации, если указаны даты
+            if start_date:
+                where_conditions.append("pp.start_time >= %s")
+                params.append(start_date + ' 00:00:00')
+            
+            if end_date:
+                where_conditions.append("pp.start_time <= %s")
+                params.append(end_date + ' 23:59:59')
+            
+            # Собираем полный запрос
+            if where_conditions:
+                where_clause = "WHERE " + " AND ".join(where_conditions)
+                select_query = base_query + " " + where_clause
+            else:
+                select_query = base_query
+            
+            # Добавляем GROUP BY и сортировку
+            select_query += """
+            GROUP BY pp.id, pp.part_name, pp.planned_quantity, pp.machine_number, 
+                     pp.start_time, pp.end_time, p.id, e.event_id, e."Time_group"
+            ORDER BY pp.start_time DESC, pp.id DESC
+            """
+            
+            cursor.execute(select_query, params)
+            records = cursor.fetchall()
+            
+            data_list = []
+            for record in records:
+                data_list.append({
+                    'id': record[0],
+                    'part_name': record[1],
+                    'planned_quantity': record[2],
+                    'machine_number': record[3],
+                    'start_time': record[4].strftime('%Y-%m-%d %H:%M'),
+                    'end_time': record[5].strftime('%Y-%m-%d %H:%M'),
+                    'has_report': record[6],
+                    'has_utilization_event': record[7]
+                })
+            
+            return jsonify({
+                'success': True,
+                'count': len(data_list),
+                'data': data_list
+            })
+            
+        except (Exception, Error) as error:
+            log_message(f"ERROR: Ошибка при получении отфильтрованных данных: {error}")
+            return jsonify({'success': False, 'error': str(error)}), 500
+            
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+                
+    except Exception as e:
+        log_message(f"ERROR: Ошибка обработки запроса: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/get_data', methods=['GET'])
 @login_required

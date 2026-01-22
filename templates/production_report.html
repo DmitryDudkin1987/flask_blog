@@ -369,6 +369,19 @@
             }
         }
         
+        // Функция для автоматической корректировки отрицательных значений
+        function validateAndCorrectNumberInput(inputElement) {
+            let value = parseInt(inputElement.value);
+            
+            // Если значение отрицательное или не число, устанавливаем 0
+            if (isNaN(value) || value < 0) {
+                inputElement.value = '0';
+            }
+            
+            // Рассчитываем общее количество дефектов
+            calculateTotalDefects();
+        }
+        
         // Функция расчета общего количества дефектов
         function calculateTotalDefects() {
             const bubbleCount = parseInt(document.getElementById('bubbleCount').value) || 0;
@@ -377,6 +390,32 @@
             const totalDefects = bubbleCount + underfillCount + inclusionCount;
             document.getElementById('totalDefects').textContent = totalDefects;
             return totalDefects;
+        }
+        
+        // Функция проверки всех числовых полей перед сохранением
+        function validateAllNumberFields() {
+            const numberFields = [
+                'bubbleCount',
+                'underfillCount', 
+                'inclusionCount',
+                'actualQuantity'
+            ];
+            
+            let allValid = true;
+            
+            numberFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                const value = parseInt(field.value);
+                
+                // Проверяем, что значение не отрицательное и является числом
+                if (isNaN(value) || value < 0) {
+                    allValid = false;
+                    // Автоматически корректируем значение
+                    field.value = '0';
+                }
+            });
+            
+            return allValid;
         }
         
         // Функция сохранения отчета по производству
@@ -399,7 +438,10 @@
             const actualEndTime = actualEndTimeInput.value;
             const messageDiv = document.getElementById('message');
             
-            // Валидация
+            // Автоматически корректируем все числовые поля
+            validateAllNumberFields();
+            
+            // Валидация обязательных полей
             if (!actualQuantity) {
                 showMessage('Введите фактическое количество', 'error');
                 actualQuantityInput.focus();
@@ -489,6 +531,38 @@
             window.location.href ='/home';
         }
         
+        // Настраиваем валидацию для полей ввода
+        function setupFieldValidation() {
+            const numberFields = [
+                'bubbleCount',
+                'underfillCount', 
+                'inclusionCount',
+                'actualQuantity'
+            ];
+            
+            numberFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    // Валидация при изменении значения
+                    field.addEventListener('input', function() {
+                        validateAndCorrectNumberInput(this);
+                    });
+                    
+                    // Валидация при потере фокуса
+                    field.addEventListener('blur', function() {
+                        validateAndCorrectNumberInput(this);
+                    });
+                    
+                    // Валидация при вставке значения
+                    field.addEventListener('paste', function(e) {
+                        setTimeout(() => {
+                            validateAndCorrectNumberInput(this);
+                        }, 0);
+                    });
+                }
+            });
+        }
+        
         // Сохранение по нажатию Enter (при фокусе на любом поле)
         const inputs = document.querySelectorAll('.form-control');
         inputs.forEach(input => {
@@ -499,14 +573,10 @@
             });
         });
         
-        // Обновление общего количества дефектов при изменении значений
-        document.getElementById('bubbleCount').addEventListener('input', calculateTotalDefects);
-        document.getElementById('underfillCount').addEventListener('input', calculateTotalDefects);
-        document.getElementById('inclusionCount').addEventListener('input', calculateTotalDefects);
-        
         // Загружаем данные при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             setDefaultTimes();
+            setupFieldValidation(); // Настраиваем валидацию полей
             calculateTotalDefects(); // Рассчитываем начальное значение
         });
     </script>
