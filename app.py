@@ -932,7 +932,7 @@ def events_page(batch_id):
         select_events_query = """
         SELECT event_id, event_name, 
                "Фактические время начала события", "Фактические время конца события", 
-               "Time_group"
+               "Time_group", responsible, comments
         FROM events 
         WHERE batch = %s 
         ORDER BY "Фактические время начала события" DESC;
@@ -959,7 +959,9 @@ def events_page(batch_id):
                 'event_name': event[1],
                 'actual_start_time': event[2].strftime('%Y-%m-%d %H:%M'),
                 'actual_end_time': event[3].strftime('%Y-%m-%d %H:%M'),
-                'time_group': event[4]
+                'time_group': event[4],
+                'responsible': event[5],
+                'comments': event[6]
             })
         
         return render_template('events.html', 
@@ -989,6 +991,8 @@ def save_event():
         actual_start_time = data.get('actual_start_time')
         actual_end_time = data.get('actual_end_time')
         time_group = data.get('time_group')
+        responsible = data.get('responsible')
+        comments = data.get('comments')
         
         if not batch_id:
             return jsonify({'success': False, 'error': 'ID батча не указан'}), 400
@@ -1014,6 +1018,14 @@ def save_event():
         except ValueError:
             return jsonify({'success': False, 'error': 'Неверный формат времени. Используйте YYYY-MM-DDTHH:MM'}), 400
         
+        # Дополнительная валидация для Breakdown time
+        if time_group == 'Breakdown time':
+            if not responsible:
+                return jsonify({'success': False, 'error': 'Для Breakdown time необходимо указать ответственного'}), 400
+            
+            if responsible not in ['FMNTC', 'Production', 'Engineering', 'DMNTC']:
+                return jsonify({'success': False, 'error': 'Неверное значение ответственного'}), 400
+        
         conn = get_db_connection()
         if conn is None:
             return jsonify({'success': False, 'error': 'Ошибка подключения к базе данных'}), 500
@@ -1031,8 +1043,9 @@ def save_event():
             # Вставляем новое событие с русскими названиями столбцов
             insert_query = """
             INSERT INTO events 
-            (event_name, batch, "Фактические время начала события", "Фактические время конца события", "Time_group") 
-            VALUES (%s, %s, %s, %s, %s) 
+            (event_name, batch, "Фактические время начала события", "Фактические время конца события", 
+             "Time_group", responsible, comments) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s) 
             RETURNING event_id;
             """
             
@@ -1041,7 +1054,9 @@ def save_event():
                 batch_id,
                 actual_start_time_dt,
                 actual_end_time_dt,
-                time_group
+                time_group,
+                responsible if time_group == 'Breakdown time' else None,
+                comments.strip() if comments else None
             ))
             conn.commit()
             
@@ -1053,7 +1068,7 @@ def save_event():
             select_events_query = """
             SELECT event_id, event_name, 
                    "Фактические время начала события", "Фактические время конца события", 
-                   "Time_group"
+                   "Time_group", responsible, comments
             FROM events 
             WHERE batch = %s 
             ORDER BY "Фактические время начала события" DESC;
@@ -1069,7 +1084,9 @@ def save_event():
                     'event_name': event[1],
                     'actual_start_time': event[2].strftime('%Y-%m-%d %H:%M'),
                     'actual_end_time': event[3].strftime('%Y-%m-%d %H:%M'),
-                    'time_group': event[4]
+                    'time_group': event[4],
+                    'responsible': event[5],
+                    'comments': event[6]
                 })
             
             return jsonify({
@@ -1093,6 +1110,7 @@ def save_event():
     except Exception as e:
         log_message(f"ERROR: Ошибка обработки запроса: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/delete_event/<int:event_id>', methods=['DELETE'])
 @login_required

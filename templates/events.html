@@ -239,6 +239,27 @@
     }
 }
 
+.breakdown-fields {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+#comments {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .breakdown-fields {
+        margin-top: 1rem;
+    }
+    
+    #comments {
+        min-height: 60px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -334,6 +355,24 @@
                             </select>
                         </div>
                         
+                        <!-- Поле для комментария (всегда отображается) -->
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Комментарий</label>
+                            <textarea class="form-control" id="comments" rows="3" placeholder="Введите комментарий (необязательно)"></textarea>
+                        </div>
+                        
+                        <!-- Поле для ответственного (только для Breakdown time) -->
+                        <div class="mb-3 breakdown-fields" style="display: none;">
+                            <label for="responsible" class="form-label">Ответственный</label>
+                            <select class="form-select" id="responsible">
+                                <option value="">Выберите ответственного</option>
+                                <option value="FMNTC">FMNTC</option>
+                                <option value="Production">Production</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="DMNTC">DMNTC</option>
+                            </select>
+                        </div>
+                        
                         <button onclick="saveEvent()" class="btn btn-primary w-100">Добавить событие</button>
                         
                         <div id="message" class="message"></div>
@@ -355,6 +394,8 @@
                                     <th>Начало</th>
                                     <th>Окончание</th>
                                     <th>Группа</th>
+                                    <th>Ответственный</th>
+                                    <th>Комментарий</th>
                                     <th>Действия</th>
                                 </tr>
                             </thead>
@@ -373,6 +414,8 @@
                                             {{ event.time_group }}
                                         </span>
                                     </td>
+                                    <td>{{ event.responsible or '' }}</td>
+                                    <td>{{ event.comments or '' }}</td>
                                     <td>
                                         <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent({{ event.event_id }})">
                                             Удалить
@@ -382,7 +425,7 @@
                                 {% endfor %}
                                 {% if not events %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
+                                    <td colspan="8" class="text-center text-muted py-4">
                                         Нет событий для этого батча
                                     </td>
                                 </tr>
@@ -515,6 +558,49 @@
             });
         }
         
+        // Показать/скрыть поле для ответственного (только для Breakdown time)
+        function toggleResponsibleField() {
+            const timeGroup = document.getElementById('timeGroup').value;
+            const responsibleField = document.querySelector('.breakdown-fields');
+            const responsibleSelect = document.getElementById('responsible');
+            
+            if (timeGroup === 'Breakdown time') {
+                responsibleField.style.display = 'block';
+            } else {
+                responsibleField.style.display = 'none';
+                // Сбрасываем значение при скрытии
+                if (responsibleSelect) responsibleSelect.value = '';
+            }
+        }
+        
+        // Валидация полей для Breakdown time (только ответственный)
+        function validateBreakdownFields() {
+            const timeGroup = document.getElementById('timeGroup').value;
+            
+            if (timeGroup !== 'Breakdown time') {
+                return { isValid: true };
+            }
+            
+            const responsible = document.getElementById('responsible').value;
+            
+            if (!responsible) {
+                return {
+                    isValid: false,
+                    message: 'Для группы "Breakdown time" необходимо выбрать ответственного'
+                };
+            }
+            
+            const validResponsibleValues = ['FMNTC', 'Production', 'Engineering', 'DMNTC'];
+            if (!validResponsibleValues.includes(responsible)) {
+                return {
+                    isValid: false,
+                    message: 'Неверное значение ответственного. Допустимые значения: FMNTC, Production, Engineering, DMNTC'
+                };
+            }
+            
+            return { isValid: true };
+        }
+        
         // Установка времени по умолчанию
         function setDefaultTimes() {
             const now = new Date();
@@ -542,6 +628,7 @@
             }
             
             resetHighlight();
+            toggleResponsibleField();
         }
         
         // Сохранение события
@@ -556,6 +643,7 @@
             const actualStartTime = startTimeInput.value;
             const actualEndTime = endTimeInput.value;
             const timeGroup = timeGroupSelect.value;
+            const comments = document.getElementById('comments').value.trim();
             const messageDiv = document.getElementById('message');
             
             resetHighlight();
@@ -581,6 +669,13 @@
             if (!timeGroup) {
                 showMessage('Выберите группу времени', 'error');
                 timeGroupSelect.focus();
+                return;
+            }
+            
+            // Проверка полей для Breakdown time (только ответственный)
+            const breakdownValidation = validateBreakdownFields();
+            if (!breakdownValidation.isValid) {
+                showMessage(breakdownValidation.message, 'error');
                 return;
             }
             
@@ -613,8 +708,14 @@
                 event_name: eventName,
                 actual_start_time: actualStartTime,
                 actual_end_time: actualEndTime,
-                time_group: timeGroup
+                time_group: timeGroup,
+                comments: comments
             };
+            
+            // Добавляем поле ответственного только для Breakdown time
+            if (timeGroup === 'Breakdown time') {
+                data.responsible = document.getElementById('responsible').value;
+            }
             
             fetch('/save_event', {
                 method: 'POST',
@@ -630,6 +731,7 @@
                     eventNameInput.value = '';
                     setDefaultTimes();
                     timeGroupSelect.value = '';
+                    document.getElementById('comments').value = '';
                     updateEventsTable(data.events);
                     resetHighlight();
                 } else {
@@ -678,7 +780,7 @@
             if (events.length === 0) {
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
-                cell.colSpan = 6;
+                cell.colSpan = 8;
                 cell.textContent = 'Нет событий для этого батча';
                 cell.className = 'text-center text-muted py-4';
                 row.appendChild(cell);
@@ -722,6 +824,16 @@
                 badge.textContent = event.time_group;
                 timeGroupCell.appendChild(badge);
                 row.appendChild(timeGroupCell);
+                
+                // Ячейка для Ответственного
+                const responsibleCell = document.createElement('td');
+                responsibleCell.textContent = event.responsible || '';
+                row.appendChild(responsibleCell);
+                
+                // Ячейка для Комментария
+                const commentsCell = document.createElement('td');
+                commentsCell.textContent = event.comments || '';
+                row.appendChild(commentsCell);
                 
                 const actionsCell = document.createElement('td');
                 const deleteButton = document.createElement('button');
@@ -778,7 +890,7 @@
         }
         
         // Обработчики для Enter
-        const inputs = document.querySelectorAll('#eventName, #actualStartTime, #actualEndTime, #timeGroup');
+        const inputs = document.querySelectorAll('#eventName, #actualStartTime, #actualEndTime, #timeGroup, #responsible, #comments');
         inputs.forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -792,6 +904,9 @@
             initBatchTimeBounds();
             setDefaultTimes();
             setupRealTimeValidation();
+            
+            // Добавляем обработчик изменения группы времени
+            document.getElementById('timeGroup').addEventListener('change', toggleResponsibleField);
         });
     </script>
 </body>
