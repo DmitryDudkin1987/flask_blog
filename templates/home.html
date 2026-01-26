@@ -113,6 +113,21 @@
             padding: 1rem 0.75rem;
         }
         
+        .table th.sortable:hover {
+            background-color: rgba(195, 0, 47, 0.05);
+        }
+        
+        .table th .sort-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+        
+        .table th.sorted-desc .sort-indicator::after {
+            content: "↓";
+            color: var(--nissan-red);
+        }
+        
         .table td {
             padding: 1rem 0.75rem;
             vertical-align: middle;
@@ -438,13 +453,14 @@
                             <div class="time-fields">
                                 <div>
                                     <label for="startTime" class="form-label small">Начало</label>
-                                    <input type="datetime-local" class="form-control" id="startTime">
+                                    <input type="datetime-local" class="form-control" id="startTime" min="2024-01-01T00:00">
                                 </div>
                                 <div>
                                     <label for="endTime" class="form-label small">Окончание</label>
-                                    <input type="datetime-local" class="form-control" id="endTime">
+                                    <input type="datetime-local" class="form-control" id="endTime" min="2024-01-01T00:00">
                                 </div>
                             </div>
+                            <small class="text-muted mt-1 d-block">Минимальная дата: 01.01.2024</small>
                         </div>
                         
                         <div class="d-grid gap-2">
@@ -462,18 +478,17 @@
             <div class="col-lg-8">
                 <h4 class="section-title">Производственные батчи</h4>
 
-<!-- Добавить этот блок после <h4 class="section-title">Производственные батчи</h4> -->
 <div class="card mb-3">
     <div class="card-body">
         <h6 class="mb-3">Фильтр по датам</h6>
         <div class="row g-3">
             <div class="col-md-3">
                 <label for="filterStartDate" class="form-label small">Начало периода</label>
-                <input type="date" class="form-control" id="filterStartDate">
+                <input type="date" class="form-control" id="filterStartDate" min="2024-01-01">
             </div>
             <div class="col-md-3">
                 <label for="filterEndDate" class="form-label small">Конец периода</label>
-                <input type="date" class="form-control" id="filterEndDate">
+                <input type="date" class="form-control" id="filterEndDate" min="2024-01-01">
             </div>
             <div class="col-md-6 d-flex align-items-end gap-2">
                 <button onclick="applyFilter()" class="btn btn-primary">
@@ -516,7 +531,7 @@
                                     <th>Название детали</th>
                                     <th>Количество</th>
                                     <th>Станок</th>
-                                    <th>Начало</th>
+                                    <th class="sorted-desc">Начало <span class="sort-indicator"></span></th>
                                     <th>Окончание</th>
                                     <th>Действия</th>
                                 </tr>
@@ -538,11 +553,33 @@
         // Оригинальный JavaScript код остается без изменений
         let selectedRow = null;
         let currentRecordId = null;
+        let allRecords = []; // Сохраняем все загруженные записи для сортировки
+        
+        // Устанавливаем минимальную дату для полей ввода
+        function setDateMinLimits() {
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            const filterStartDate = document.getElementById('filterStartDate');
+            const filterEndDate = document.getElementById('filterEndDate');
+            
+            const minDate = '2024-01-01T00:00';
+            
+            if (startTimeInput) startTimeInput.min = minDate;
+            if (endTimeInput) endTimeInput.min = minDate;
+            if (filterStartDate) filterStartDate.min = '2024-01-01';
+            if (filterEndDate) filterEndDate.min = '2024-01-01';
+        }
         
         function setDefaultTimes() {
             const now = new Date();
             const startTimeInput = document.getElementById('startTime');
             const endTimeInput = document.getElementById('endTime');
+            
+            // Проверяем, что текущая дата не меньше минимальной
+            const minDate = new Date('2024-01-01T00:00');
+            if (now < minDate) {
+                now.setTime(minDate.getTime());
+            }
             
             const formatDateTime = (date) => {
                 const year = date.getFullYear();
@@ -561,6 +598,11 @@
             if (!endTimeInput.value) {
                 const endTime = new Date(now);
                 endTime.setHours(endTime.getHours() + 1);
+                // Проверяем, что конечная дата не меньше минимальной
+                if (endTime < minDate) {
+                    endTime.setTime(minDate.getTime());
+                    endTime.setHours(endTime.getHours() + 1);
+                }
                 endTimeInput.value = formatDateTime(endTime);
             }
         }
@@ -600,7 +642,44 @@
             document.getElementById('partName').focus();
         }
         
+        function validateDateTimeInput() {
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
+            
+            // Проверяем, что дата начала не раньше 01.01.2024
+            const minDate = new Date('2024-01-01T00:00');
+            const startDate = new Date(startTimeInput.value);
+            const endDate = new Date(endTimeInput.value);
+            
+            if (startDate < minDate) {
+                showMessage('Дата начала не может быть раньше 01.01.2024', 'error');
+                startTimeInput.value = minDate.toISOString().slice(0, 16);
+                startTimeInput.focus();
+                return false;
+            }
+            
+            if (endDate < minDate) {
+                showMessage('Дата окончания не может быть раньше 01.01.2024', 'error');
+                endTimeInput.value = new Date(minDate.getTime() + 60 * 60 * 1000).toISOString().slice(0, 16);
+                endTimeInput.focus();
+                return false;
+            }
+            
+            if (endDate <= startDate) {
+                showMessage('Время окончания должно быть позже времени начала', 'error');
+                endTimeInput.focus();
+                return false;
+            }
+            
+            return true;
+        }
+        
         function saveData() {
+            // Сначала валидируем даты
+            if (!validateDateTimeInput()) {
+                return;
+            }
+            
             const recordId = document.getElementById('recordId').value;
             const partNameInput = document.getElementById('partName');
             const quantityInput = document.getElementById('plannedQuantity');
@@ -654,12 +733,6 @@
             if (parseInt(machineNumber) <= 0) {
                 showMessage('Номер станка должен быть положительным числом', 'error');
                 machineInput.focus();
-                return;
-            }
-            
-            if (new Date(endTime) <= new Date(startTime)) {
-                showMessage('Время окончания должно быть позже времени начала', 'error');
-                endTimeInput.focus();
                 return;
             }
             
@@ -748,19 +821,36 @@
             }, 5000);
         }
         
+        // Функция сортировки записей по дате начала (новые сверху)
+        function sortRecordsByStartDate(records) {
+            return records.sort((a, b) => {
+                const aDate = new Date(a.start_time).getTime();
+                const bDate = new Date(b.start_time).getTime();
+                return bDate - aDate; // По убыванию (новые сверху)
+            });
+        }
+        
         function loadData() {
-            fetch('/get_data')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateRecordsTable(data.data);
-                    } else {
-                        console.error('Error loading data:', data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+            if (currentFilter.isActive) {
+                loadFilteredData();
+            } else {
+                fetch('/get_data')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            allRecords = data.data;
+                            const sortedRecords = sortRecordsByStartDate([...allRecords]);
+                            updateRecordsTable(sortedRecords);
+                            updateRecordCount(data.count);
+                            updateFilterStatus();
+                        } else {
+                            console.error('Error loading data:', data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
         }
 
 // Добавить эти функции в JavaScript секцию
@@ -824,7 +914,9 @@ function loadFilteredData() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateRecordsTable(data.data);
+                allRecords = data.data;
+                const sortedRecords = sortRecordsByStartDate([...allRecords]);
+                updateRecordsTable(sortedRecords);
                 updateRecordCount(data.count);
             } else {
                 console.error('Error loading filtered data:', data.error);
@@ -888,31 +980,11 @@ function updateRecordCount(count) {
     }
 }
 
-// Обновляем функцию loadData для учета фильтра
-function loadData() {
-    if (currentFilter.isActive) {
-        loadFilteredData();
-    } else {
-        fetch('/get_data')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateRecordsTable(data.data);
-                    updateRecordCount(data.count);
-                    updateFilterStatus();
-                } else {
-                    console.error('Error loading data:', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
-}
-
-
 // Обновляем обработчик DOMContentLoaded для установки сегодняшней даты по умолчанию
 document.addEventListener('DOMContentLoaded', function() {
+    // Устанавливаем минимальные даты
+    setDateMinLimits();
+    
     clearFormForNewRecord();
     loadData();
     
@@ -928,6 +1000,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Применяем фильтр по умолчанию
     applyFilter();
+    
+    // Добавляем валидацию дат при изменении
+    document.getElementById('startTime').addEventListener('change', validateDateTimeInput);
+    document.getElementById('endTime').addEventListener('change', validateDateTimeInput);
 });
 
         function updateRecordsTable(records) {
@@ -1037,11 +1113,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveData();
                 }
             });
-        });
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            clearFormForNewRecord();
-            loadData();
         });
     </script>
 </body>

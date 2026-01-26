@@ -201,6 +201,18 @@
             color: #D70015;
             border: 1px solid rgba(255, 59, 48, 0.2);
         }
+        
+        .time-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .time-fields {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -265,33 +277,26 @@
                             <h6 class="mb-3">Фактические данные производства</h6>
                             
                             <div class="mb-3">
-                                <label for="partNumber" class="form-label">Номер детали</label>
-                                <select class="form-select" id="partNumber">
-                                    <option value="" {{ 'selected' if not report or not report.part_number else '' }}>Выберите деталь</option>
-                                    <option value="Деталь 1" {{ 'selected' if report and report.part_number == 'Деталь 1' else '' }}>Деталь 1</option>
-                                    <option value="Деталь 2" {{ 'selected' if report and report.part_number == 'Деталь 2' else '' }}>Деталь 2</option>
-                                    <option value="Деталь 3" {{ 'selected' if report and report.part_number == 'Деталь 3' else '' }}>Деталь 3</option>
-                                </select>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="actualQuantity" class="form-label">Фактическое количество</label>
-                                    <input type="number" class="form-control" id="actualQuantity" min="0"
-                                           value="{{ report.actual_quantity if report else '' }}"
-                                           placeholder="шт">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="actualStartTime" class="form-label">Время начала</label>
-                                    <input type="datetime-local" class="form-control" id="actualStartTime"
-                                           value="{{ report.actual_start_time if report else '' }}">
-                                </div>
+                                <label for="actualQuantity" class="form-label">Фактическое количество</label>
+                                <input type="number" class="form-control" id="actualQuantity" min="0"
+                                       value="{{ report.actual_quantity if report else '' }}"
+                                       placeholder="шт">
                             </div>
                             
                             <div class="mb-4">
-                                <label for="actualEndTime" class="form-label">Время окончания</label>
-                                <input type="datetime-local" class="form-control" id="actualEndTime"
-                                       value="{{ report.actual_end_time if report else '' }}">
+                                <label class="form-label">Временные интервалы</label>
+                                <div class="time-fields">
+                                    <div>
+                                        <label for="actualStartTime" class="form-label small">Время начала</label>
+                                        <input type="datetime-local" class="form-control" id="actualStartTime"
+                                               value="{{ report.actual_start_time if report else '' }}">
+                                    </div>
+                                    <div>
+                                        <label for="actualEndTime" class="form-label small">Время окончания</label>
+                                        <input type="datetime-local" class="form-control" id="actualEndTime"
+                                               value="{{ report.actual_end_time if report else '' }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -421,7 +426,6 @@
         // Функция сохранения отчета по производству
         function saveProductionReport() {
             const orderId = document.getElementById('orderId').value;
-            const partNumberInput = document.getElementById('partNumber');
             const actualQuantityInput = document.getElementById('actualQuantity');
             const bubbleCountInput = document.getElementById('bubbleCount');
             const underfillCountInput = document.getElementById('underfillCount');
@@ -429,7 +433,6 @@
             const actualStartTimeInput = document.getElementById('actualStartTime');
             const actualEndTimeInput = document.getElementById('actualEndTime');
             
-            const partNumber = partNumberInput.value.trim();
             const actualQuantity = actualQuantityInput.value.trim();
             const bubbleCount = bubbleCountInput.value.trim();
             const underfillCount = underfillCountInput.value.trim();
@@ -478,7 +481,6 @@
             // Подготовка данных для отправки
             const data = { 
                 order_id: orderId,
-                part_number: partNumber,
                 actual_quantity: actualQuantity,
                 bubble_count: bubbleCount || 0,
                 underfill_count: underfillCount || 0,
