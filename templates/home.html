@@ -988,19 +988,6 @@ document.addEventListener('DOMContentLoaded', function() {
     clearFormForNewRecord();
     loadData();
     
-    // Устанавливаем сегодняшнюю дату в поле "конец периода"
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('filterEndDate').value = today;
-    
-    // Устанавливаем дату 7 дней назад в поле "начало периода"
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekAgoStr = weekAgo.toISOString().split('T')[0];
-    document.getElementById('filterStartDate').value = weekAgoStr;
-    
-    // Применяем фильтр по умолчанию
-    applyFilter();
-    
     // Добавляем валидацию дат при изменении
     document.getElementById('startTime').addEventListener('change', validateDateTimeInput);
     document.getElementById('endTime').addEventListener('change', validateDateTimeInput);
